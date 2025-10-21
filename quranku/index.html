@@ -269,7 +269,7 @@
         div.className = "result";
         const ref = `Surah ${a.suraName} (${a.suraIndex}:${a.ayaIndex})`;
         div.innerHTML = `
-          <button class="copy-btn" onclick="salinAyat('${a.arab.replace(/'/g,"\\'")}', '${a.indo.replace(/'/g,"\\'")}', '${ref.replace(/'/g,"\\'")}')">📋 Salin</button>
+          <button class="copy-btn" onclick="salinAyat('${a.arab.replace(/'/g,"\\'")}', '${a.indo.replace(/'/g,"\\'")}', '${ref.replace(/'/g,"\\'")}')">📋</button>
           <div class="arab">${highlight(a.arab, query)}</div>
           <div class="indo">${highlight(a.indo, query)}</div>
           <div class="ref">${ref}</div>
@@ -329,3 +329,4 @@
   </script>
 </body>
 </html>
+
