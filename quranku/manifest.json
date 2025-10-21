@@ -1,0 +1,27 @@
+{
+  "name": "Al-Qur'an Hari Ini",
+  "short_name": "Qur'an",
+  "description": "Aplikasi offline Al-Qur'an — ayat hari ini, pencarian, audio, dan terjemahan.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#d4fc79",
+  "theme_color": "#27ae60",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f54c.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f54c.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/512x512/1f54c.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
