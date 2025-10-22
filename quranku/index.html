@@ -235,11 +235,56 @@
       <button onclick="window.open('http://lynk.id/alima/s/5k0eny0qk69k', '_blank')">💚 Support Me</button>
     </div>
  
-  <div class"footer">
-    <strong>Ayat Al-Qur'an Hari ini</strong><br>
-    Versi 1.0 • Dibuat untuk membantu membaca & memahami Al-Qur’an 🌙<br>
-    Pengembang: <a href="https://github.com/sutanto-teguh" target="_blank">Teguh Sutanto</a><br>
+ <footer class="footer-quran">
+  <h2>📖 Ayat Quran Hari Ini</h2>
+  <p>"Sesungguhnya Al-Qur’an ini memberi petunjuk kepada (jalan) yang lebih lurus." <span>(QS. Al-Isra: 9)</span></p>
+  <div class="info">
+    <span id="tanggal"></span> • <span id="hijriah"></span>
   </div>
+  <p class="credit">© 2025 QuranView | Dibuat dengan 💚 untuk menginspirasi harianmu</p>
+</footer>
+
+<style>
+.footer-quran {
+  background: linear-gradient(90deg, #065f46, #047857, #064e3b);
+  color: #fff;
+  text-align: center;
+  padding: 1.5rem;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+}
+.footer-quran h2 {
+  font-size: 1.6rem;
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+}
+.footer-quran p {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0.3rem auto;
+}
+.footer-quran .info {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+.footer-quran .credit {
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+</style>
+
+<script>
+const tanggal = new Date().toLocaleDateString('id-ID', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
+document.getElementById('tanggal').textContent = tanggal;
+document.getElementById('hijriah').textContent = "18 Rabi’ul Akhir 1447 H";
+</script>
+
   
   <script>
     let hasilPencarian = [];
@@ -381,6 +426,7 @@
   </script>
 </body>
 </html>
+
 
 
 
