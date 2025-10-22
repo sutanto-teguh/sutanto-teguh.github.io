@@ -17,172 +17,23 @@
   
   <script src="data-quran.min.js"></script>
   <style>
-     :root {
+    :root {
       --primary: #1abc9c;
       --secondary: #16a085;
       --light-bg: #f8fdfb;
       --dark-text: #2c3e50;
       --muted: #7f8c8d;
     }
+    * { box-sizing: border-box; }
     body {
       font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #d4fc79, #96e6a1);
+      background: var(--light-bg);
+      margin: 0;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      text-align: center;
       min-height: 100vh;
-      margin: 0;
+      color: var(--dark-text);
     }
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 0.5em;
-    }
-    .card {
-      background: #fff;
-      padding: 25px 30px;
-      border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      max-width: 700px;
-      width: 100%;
-      margin-bottom: 30px;
-    }
-    .ayat {
-      direction: rtl;
-      font-size: 1.6em;
-      color: #2d3436;
-      margin-bottom: 15px;
-      line-height: 1.8;
-    }
-    .arti {
-      font-size: 1.1em;
-      color: #34495e;
-      text-align: left;
-      margin-top: 10px;
-    }
-    .sura {
-      color: #555;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .tanggal {
-      color: #888;
-      font-size: 0.9em;
-      margin-top: 15px;
-    }
-    #search-box {
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      max-width: 700px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    input[type="text"], select {
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #bbb;
-      font-size: 1em;
-    }
-    input[type="text"] {
-      flex: 1;
-      min-width: 250px;
-    }
-    button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 10px;
-      background-color: #27ae60;
-      color: white;
-      cursor: pointer;
-      font-size: 1em;
-    }
-    button:hover {
-      background-color: #2ecc71;
-    }
-    .result {
-      background: #fff;
-      border-radius: 15px;
-      padding: 15px;
-      margin: 10px 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: left;
-      position: relative;
-    }
-    .copy-btn {
-      position: absolute;
-      top: 15px;
-      right: 10px;
-      background: #3498db;
-      border: none;
-      color: white;
-      padding: 3px 3px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 0.85em;
-    }
-    .copy-btn:hover {
-      background: #2980b9;
-    }
-    .result .arab {
-      direction: rtl;
-      font-size: 1.3em;
-      margin-bottom: 8px;
-    }
-    .result .indo {
-      font-size: 1em;
-      color: #333;
-    }
-    .result .ref {
-      color: #777;
-      font-size: 0.9em;
-      margin-top: 5px;
-    }
-    mark {
-      background: #ffeaa7;
-      font-weight: bold;
-      border-radius: 3px;
-      padding: 0 3px;
-    }
-    .pagination {
-      display: flex;
-      justify-content: center;
-      margin-top: 15px;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .pagination button {
-      background: #3498db;
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .pagination button.active {
-      background: #2ecc71;
-    }
-    .pagination button:hover {
-      background: #2980b9;
-    }
-    .counter {
-      font-size: 0.95em;
-      color: #444;
-      margin: 10px 0;
-    }
-      .support button {
-      background: linear-gradient(135deg, #1abc9c, #16a085);
-      font-weight: 600;
-      border-radius: 25px;
-      padding: 10px 20px;
-    }
-    .support button:hover {
-      background: linear-gradient(135deg, #16a085, #1abc9c);
-    }
-    
     header {
       background: var(--primary);
       color: white;
@@ -192,7 +43,153 @@
       font-weight: 600;
       box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
-    
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    select, input {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      min-width: 180px;
+      transition: all 0.3s ease;
+    }
+    select:focus, input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 5px rgba(26,188,156,0.4);
+    }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      background-color: var(--primary);
+      color: white;
+      cursor: pointer;
+      font-size: 1em;
+      transition: 0.3s;
+    }
+    button:hover { background-color: var(--secondary); }
+    #counter {
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 0.95em;
+      font-weight: 500;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 15px 0;
+    }
+    .pagination button {
+      background: #3498db;
+      border: none;
+      color: white;
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .pagination button.active { background: var(--primary); }
+    .pagination button:hover { background: var(--secondary); }
+    .card {
+      background: white;
+      padding: 20px 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      margin-bottom: 15px;
+      transition: transform 0.2s ease;
+      position: relative;
+    }
+    .card:hover { transform: translateY(-3px); }
+    .ayat {
+      direction: rtl;
+      font-size: 1.6em;
+      color: var(--dark-text);
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+    .arti {
+      font-size: 1.05em;
+      color: #34495e;
+      margin-top: 5px;
+    }
+    .info {
+      font-size: 0.9em;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    mark {
+      background: #ffeaa7;
+      border-radius: 3px;
+      padding: 0 3px;
+    }
+   .play-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 15px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, background 0.3s;
+}
+.play-btn:hover {
+  background: var(--secondary);
+  transform: scale(1.08);
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+.play-btn.playing {
+  background: gold;
+  color: #2c3e50;
+  animation: pulse 1.5s infinite;
+  transform: scale(1.08);
+}
+    /* 💚 Support Me Button */
+    .support {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .support button {
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      font-weight: 600;
+      border-radius: 25px;
+      padding: 10px 20px;
+    }
+    .support button:hover {
+      background: linear-gradient(135deg, #16a085, #1abc9c);
+    }
+
     /* ⚙️ Footer */
     footer {
       background: var(--primary);
@@ -211,6 +208,7 @@
       color: #fff;
       text-decoration: none;
     }
+
     @media (max-width: 600px) {
       select, input, button { width: 100%; }
       .controls { flex-direction: column; align-items: stretch; }
@@ -392,6 +390,7 @@
   </script>
 </body>
 </html>
+
 
 
 
