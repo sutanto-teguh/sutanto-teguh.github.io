@@ -152,7 +152,18 @@
   background: var(--secondary);
   transform: scale(1.08);
 }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
 
+.play-btn.playing {
+  background: gold;
+  color: #2c3e50;
+  animation: pulse 1.5s infinite;
+  transform: scale(1.08);
+}
     /* 💚 Support Me Button */
     .support {
       margin-top: 10px;
@@ -309,7 +320,7 @@
         const audioUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${indexGlobal}.mp3`;
 
         let html = `<button class='play-btn' onclick="putarAudio('${audioUrl}', this)">▶️</button>`;
-        if (mode === "arab" || mode === "both")
+      if (mode === "arab" || mode === "both")
           html += `<div class='ayat'>${highlight(a.arab, query)}</div>`;
         if (mode === "indo" || mode === "both")
           html += `<div class='arti'>${highlight(a.indo, query)}</div>`;
@@ -331,17 +342,46 @@
     }
 
     let audioSekarang = null;
-    function putarAudio(url, btn) {
-      if (audioSekarang) {
-        audioSekarang.pause();
-        audioSekarang = null;
-        document.querySelectorAll(".play-btn").forEach(b => b.textContent = "▶️");
-      }
-      audioSekarang = new Audio(url);
+    let audioSekarang = null;
+function putarAudio(url, btn) {
+  // Hentikan audio sebelumnya
+  if (audioSekarang) {
+    audioSekarang.pause();
+    audioSekarang = null;
+    document.querySelectorAll(".play-btn").forEach(b => {
+      b.textContent = "▶️";
+      b.classList.remove("playing");
+    });
+  }
+
+  // Mulai audio baru
+  audioSekarang = new Audio(url);
+  audioSekarang.play();
+
+  // Ubah tombol tampilan
+  btn.textContent = "⏸️";
+  btn.classList.add("playing");
+
+  // Saat audio selesai
+  audioSekarang.onended = () => {
+    btn.textContent = "▶️";
+    btn.classList.remove("playing");
+  };
+
+  // Jika tombol diklik lagi saat audio sedang berjalan
+  btn.onclick = () => {
+    if (audioSekarang && !audioSekarang.paused) {
+      audioSekarang.pause();
+      btn.textContent = "▶️";
+      btn.classList.remove("playing");
+    } else {
       audioSekarang.play();
       btn.textContent = "⏸️";
-      audioSekarang.onended = () => { btn.textContent = "▶️"; };
+      btn.classList.add("playing");
     }
+  };
+}
+
 
     function cariAyat() {
       const query = document.getElementById("searchInput").value.trim().toLowerCase();
