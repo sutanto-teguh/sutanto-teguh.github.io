@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Al-Qur'an Digital Viewer</title>
+  <script src="data-quran.min.js"></script>
+  <style>
+    :root {
+      --primary: #1abc9c;
+      --secondary: #16a085;
+      --light-bg: #f8fdfb;
+      --dark-text: #2c3e50;
+      --muted: #7f8c8d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--light-bg);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      color: var(--dark-text);
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 1.4em;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    select, input {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      min-width: 180px;
+      transition: all 0.3s ease;
+    }
+    select:focus, input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 5px rgba(26,188,156,0.4);
+    }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      background-color: var(--primary);
+      color: white;
+      cursor: pointer;
+      font-size: 1em;
+      transition: 0.3s;
+    }
+    button:hover { background-color: var(--secondary); }
+    #counter {
+      margin: 10px 0;
+      color: var(--muted);
+      font-size: 0.95em;
+      font-weight: 500;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 15px 0;
+    }
+    .pagination button {
+      background: #3498db;
+      border: none;
+      color: white;
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .pagination button.active { background: var(--primary); }
+    .pagination button:hover { background: var(--secondary); }
+    .card {
+      background: white;
+      padding: 20px 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      margin-bottom: 15px;
+      transition: transform 0.2s ease;
+      position: relative;
+    }
+    .card:hover { transform: translateY(-3px); }
+    .ayat {
+      direction: rtl;
+      font-size: 1.6em;
+      color: var(--dark-text);
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+    .arti {
+      font-size: 1.05em;
+      color: #34495e;
+      margin-top: 5px;
+    }
+    .info {
+      font-size: 0.9em;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    mark {
+      background: #ffeaa7;
+      border-radius: 3px;
+      padding: 0 3px;
+    }
+    .play-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 1.2em;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .play-btn:hover { background: var(--secondary); }
+
+    /* 💚 Support Me Button */
+    .support {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .support button {
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      font-weight: 600;
+      border-radius: 25px;
+      padding: 10px 20px;
+    }
+    .support button:hover {
+      background: linear-gradient(135deg, #16a085, #1abc9c);
+    }
+
+    /* ⚙️ Footer */
+    footer {
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 20px 10px;
+      font-size: 0.9em;
+      margin-top: auto;
+      line-height: 1.6;
+    }
+    footer a {
+      color: #f9f9f9;
+      text-decoration: underline;
+    }
+    footer a:hover {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      select, input, button { width: 100%; }
+      .controls { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <header>📖 Al-Qur'an Digital Viewer</header>
+
+  <main>
+    <div class="controls">
+      <select id="surahSelect" onchange="isiAyat()"></select>
+      <select id="ayatSelect" onchange="tampilkanAyat()"></select>
+      <select id="modeSelect" onchange="tampilkanAyat()">
+        <option value="both">Arab & Terjemahan</option>
+        <option value="arab">Arab saja</option>
+        <option value="indo">Terjemahan saja</option>
+      </select>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Cari teks Arab / terjemahan (seluruh Al-Qur’an)..." />
+      <button onclick="cariAyat()">🔍 Cari</button>
+    </div>
+
+    <div id="counter"></div>
+    <div id="displayArea"></div>
+    <div id="pagination" class="pagination"></div>
+
+    <!-- 💚 Support Me -->
+    <div class="support">
+      <button onclick="window.open('https://trakteer.id/', '_blank')">💚 Support Me</button>
+    </div>
+  </main>
+
+  <!-- ⚙️ Footer -->
+  <footer>
+    <strong>Al-Qur'an Digital Viewer</strong><br>
+    Versi 1.0 • Dibuat untuk membantu membaca & memahami Al-Qur’an 🌙<br>
+    Pengembang: <a href="https://github.com/" target="_blank">Nama Kamu</a><br>
+    Sumber data & audio: <a href="https://quran.api-docs.io/" target="_blank">Islamic Network</a>
+  </footer>
+
+  <script>
+    const hasilPerHalaman = 15;
+    let halamanSaatIni = 1;
+    let hasilTampil = [];
+
+    const surahSelect = document.getElementById("surahSelect");
+    const surahMap = new Map();
+    QURAN_DATA.forEach(a => {
+      if (!surahMap.has(a.suraIndex)) surahMap.set(a.suraIndex, a.suraName);
+    });
+    surahSelect.innerHTML = '<option value="">Semua Surah</option>' +
+      Array.from(surahMap.entries())
+        .sort((a,b)=>a[0]-b[0])
+        .map(([idx, name]) => `<option value="${idx}">${idx}. ${name}</option>`)
+        .join("");
+
+    function isiAyat() {
+      const surahIndex = surahSelect.value;
+      const ayatSelect = document.getElementById("ayatSelect");
+      ayatSelect.innerHTML = "";
+
+      if (!surahIndex) {
+        ayatSelect.innerHTML = "<option value=''>Semua Ayat</option>";
+        tampilkanAyat();
+        return;
+      }
+
+      const ayatSurah = QURAN_DATA.filter(a => a.suraIndex == surahIndex);
+      ayatSelect.innerHTML = `<option value="all">Semua Ayat</option>` +
+        ayatSurah.map(a => `<option value="${a.ayaIndex}">Ayat ${a.ayaIndex}</option>`).join("");
+      tampilkanAyat();
+    }
+
+    function highlight(text, query) {
+      if (!query) return text;
+      const regex = new RegExp(`(${query})`, "gi");
+      return text.replace(regex, "<mark>$1</mark>");
+    }
+
+    function tampilkanAyat() {
+      const surahIndex = surahSelect.value;
+      const ayatIndex = document.getElementById("ayatSelect").value;
+      const mode = document.getElementById("modeSelect").value;
+      const counter = document.getElementById("counter");
+
+      if (!surahIndex) {
+        document.getElementById("displayArea").innerHTML =
+          "<div class='card'><div class='arti'>Pilih surah untuk menampilkan ayat, atau lakukan pencarian.</div></div>";
+        counter.textContent = "";
+        return;
+      }
+
+      let dataAyat = QURAN_DATA.filter(a => a.suraIndex == surahIndex);
+      if (ayatIndex && ayatIndex !== "all") dataAyat = dataAyat.filter(a => a.ayaIndex == ayatIndex);
+
+      hasilTampil = dataAyat;
+      halamanSaatIni = 1;
+      counter.textContent = `Menampilkan ${hasilTampil.length} ayat dari Surah ${dataAyat[0].suraName}`;
+      renderHasil(mode);
+    }
+
+    function renderHasil(mode, query = "") {
+      const display = document.getElementById("displayArea");
+      const pag = document.getElementById("pagination");
+      const awal = (halamanSaatIni - 1) * hasilPerHalaman;
+      const akhir = awal + hasilPerHalaman;
+      const subset = hasilTampil.slice(awal, akhir);
+
+      if (subset.length === 0) {
+        display.innerHTML = "<div class='card'><div class='arti'>Tidak ada ayat ditemukan.</div></div>";
+        pag.innerHTML = "";
+        return;
+      }
+
+      display.innerHTML = subset.map(a => {
+        const indexGlobal = QURAN_DATA.findIndex(x => x.suraIndex == a.suraIndex && x.ayaIndex == a.ayaIndex) + 1;
+        const audioUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${indexGlobal}.mp3`;
+
+        let html = `<button class='play-btn' onclick="putarAudio('${audioUrl}', this)">▶️</button>`;
+        if (mode === "arab" || mode === "both")
+          html += `<div class='ayat'>${highlight(a.arab, query)}</div>`;
+        if (mode === "indo" || mode === "both")
+          html += `<div class='arti'>${highlight(a.indo, query)}</div>`;
+        html += `<div class='info'>Surah ${a.suraName} (${a.suraIndex}:${a.ayaIndex})</div>`;
+        return `<div class='card'>${html}</div>`;
+      }).join("");
+
+      const totalHalaman = Math.ceil(hasilTampil.length / hasilPerHalaman);
+      pag.innerHTML = "";
+      if (totalHalaman > 1) {
+        for (let i = 1; i <= totalHalaman; i++) {
+          const btn = document.createElement("button");
+          btn.textContent = i;
+          if (i === halamanSaatIni) btn.classList.add("active");
+          btn.onclick = () => { halamanSaatIni = i; renderHasil(mode, query); };
+          pag.appendChild(btn);
+        }
+      }
+    }
+
+    let audioSekarang = null;
+    function putarAudio(url, btn) {
+      if (audioSekarang) {
+        audioSekarang.pause();
+        audioSekarang = null;
+        document.querySelectorAll(".play-btn").forEach(b => b.textContent = "▶️");
+      }
+      audioSekarang = new Audio(url);
+      audioSekarang.play();
+      btn.textContent = "⏸️";
+      audioSekarang.onended = () => { btn.textContent = "▶️"; };
+    }
+
+    function cariAyat() {
+      const query = document.getElementById("searchInput").value.trim().toLowerCase();
+      const surahIndex = surahSelect.value;
+      const mode = document.getElementById("modeSelect").value;
+      const counter = document.getElementById("counter");
+
+      if (!query) {
+        tampilkanAyat();
+        return;
+      }
+
+      let hasil = QURAN_DATA.filter(a =>
+        a.arab.toLowerCase().includes(query) || a.indo.toLowerCase().includes(query)
+      );
+      if (surahIndex) hasil = hasil.filter(a => a.suraIndex == surahIndex);
+
+      hasilTampil = hasil;
+      halamanSaatIni = 1;
+
+      counter.textContent = hasil.length === 0
+        ? `Tidak ditemukan hasil untuk "${query}"`
+        : `Ditemukan ${hasil.length} ayat cocok untuk "${query}"${surahIndex ? " di Surah " + hasil[0].suraName : ""}`;
+
+      renderHasil(mode, query);
+    }
+  </script>
+</body>
+</html>
