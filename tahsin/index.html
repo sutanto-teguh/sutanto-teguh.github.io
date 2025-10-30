@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Belajar Huruf Hijaiyah Interaktif</title>
+<style>
+  body {
+    font-family: "Amiri", serif;
+    background: #f9f9f4;
+    color: #1b5e20;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .card {
+    background: white;
+    border: 2px solid #c8e6c9;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+  }
+
+  .card:hover {
+    transform: scale(1.03);
+  }
+
+  .huruf {
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  button {
+    background: #1b5e20;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    margin: 0.2rem;
+    transition: all 0.3s ease;
+  }
+
+  button:hover {
+    background: #2e7d32;
+  }
+
+  .feedback {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  .recording {
+    color: red;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h1>📖 Belajar Huruf Hijaiyah - Versi Interaktif</h1>
+<p>Klik <strong>Dengarkan</strong> untuk mendengar contoh, lalu <strong>Ucapkan</strong> untuk menirukan pelafalan.</p>
+
+<div class="grid" id="gridHuruf"></div>
+
+<audio id="audioPlayer" preload="auto"></audio>
+
+<script>
+const hurufList = [
+  { arab: "ا", latin: "Alif", audio: "audio/alif.mp3" },
+  { arab: "ب", latin: "Ba", audio: "audio/ba.mp3" },
+  { arab: "ت", latin: "Ta", audio: "audio/ta.mp3" },
+  { arab: "ث", latin: "Tsa", audio: "audio/tsa.mp3" },
+  { arab: "ج", latin: "Jim", audio: "audio/jim.mp3" },
+  { arab: "ح", latin: "Ha", audio: "audio/ha.mp3" },
+  { arab: "خ", latin: "Kha", audio: "audio/kha.mp3" },
+  { arab: "د", latin: "Dal", audio: "audio/dal.mp3" },
+  { arab: "ذ", latin: "Dzal", audio: "audio/dzal.mp3" },
+  { arab: "ر", latin: "Ra", audio: "audio/ra.mp3" },
+  { arab: "ز", latin: "Zai", audio: "audio/zai.mp3" },
+  { arab: "س", latin: "Sin", audio: "audio/sin.mp3" },
+  { arab: "ش", latin: "Syin", audio: "audio/syin.mp3" },
+  { arab: "ص", latin: "Shad", audio: "audio/shad.mp3" },
+  { arab: "ض", latin: "Dhad", audio: "audio/dhad.mp3" },
+  { arab: "ط", latin: "Tha", audio: "audio/tha.mp3" },
+  { arab: "ظ", latin: "Zha", audio: "audio/zha.mp3" },
+  { arab: "ع", latin: "Ain", audio: "audio/ain.mp3" },
+  { arab: "غ", latin: "Ghain", audio: "audio/ghain.mp3" },
+  { arab: "ف", latin: "Fa", audio: "audio/fa.mp3" },
+  { arab: "ق", latin: "Qaf", audio: "audio/qaf.mp3" },
+  { arab: "ك", latin: "Kaf", audio: "audio/kaf.mp3" },
+  { arab: "ل", latin: "Lam", audio: "audio/lam.mp3" },
+  { arab: "م", latin: "Mim", audio: "audio/mim.mp3" },
+  { arab: "ن", latin: "Nun", audio: "audio/nun.mp3" },
+  { arab: "و", latin: "Wau", audio: "audio/wau.mp3" },
+  { arab: "ه", latin: "Ha", audio: "audio/haa.mp3" },
+  { arab: "ي", latin: "Ya", audio: "audio/ya.mp3" }
+];
+
+// Generate kartu huruf
+const grid = document.getElementById("gridHuruf");
+hurufList.forEach(h => {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <div class="huruf">${h.arab}</div>
+    <div><em>${h.latin}</em></div>
+    <button onclick="playAudio('${h.audio}', '${h.latin}')">🎧 Dengarkan</button>
+    <button onclick="startRecognition('${h.latin.toLowerCase()}')">🎙️ Ucapkan</button>
+    <div class="feedback" id="fb-${h.latin.toLowerCase()}">Siap belajar huruf ini</div>
+  `;
+  grid.appendChild(card);
+});
+
+const audioPlayer = document.getElementById("audioPlayer");
+
+function playAudio(src, nama) {
+  audioPlayer.src = src;
+  audioPlayer.play().catch(() => alert("Audio tidak tersedia: " + src));
+  const fb = document.getElementById("fb-" + nama.toLowerCase());
+  fb.textContent = "Mendengarkan contoh '" + nama + "'...";
+}
+
+// Fungsi pengenalan suara
+function startRecognition(target) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const fb = document.getElementById("fb-" + target);
+
+  if (!SpeechRecognition) {
+    fb.textContent = "⚠️ Browser belum mendukung perekaman suara.";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "id-ID";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  fb.textContent = "🎙️ Sedang merekam... Ucapkan huruf " + target;
+  fb.classList.add("recording");
+
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    const result = event.results[0][0].transcript.toLowerCase();
+    fb.classList.remove("recording");
+
+    let score = 0;
+    if (result.includes(target)) score = 90;
+    else if (result.includes(target.charAt(0))) score = 70;
+    else score = 50;
+
+    let pesan = "";
+    if (score >= 85) pesan = "✅ Bagus! Pelafalan sudah tepat.";
+    else if (score >= 70) pesan = "🙂 Cukup, coba lebih jelas lagi.";
+    else pesan = "🔁 Coba lagi, fokus pada makhraj huruf.";
+
+    fb.innerHTML = `🎯 Skor: ${score}/100<br>${pesan}`;
+  };
+
+  recognition.onerror = (event) => {
+    fb.classList.remove("recording");
+    fb.textContent = "❌ Terjadi kesalahan: " + event.error;
+  };
+
+  recognition.onend = () => fb.classList.remove("recording");
+}
+</script>
+
+</body>
+</html>
