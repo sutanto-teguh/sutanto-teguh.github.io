@@ -1,390 +1,149 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ayat Al-Qur'an Hari Ini & Pencarian</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabel Interaktif Huruf Hijaiyah</title>
 
-  <link rel="manifest" href="manifest.json">
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('✅ Service Worker terdaftar'))
-        .catch(err => console.error('❌ SW error:', err));
-    }
-  </script>
-  
-  <script src="data-quran.min.js"></script>
- <style>
-    body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #d4fc79, #96e6a1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      text-align: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 0.5em;
-    }
-    .card {
-      background: #fff;
-      padding: 25px 30px;
-      border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      max-width: 700px;
-      width: 100%;
-      margin-bottom: 30px;
-    }
-    .ayat {
-      direction: rtl;
-      font-size: 1.6em;
-      color: #2d3436;
-      margin-bottom: 15px;
-      line-height: 1.8;
-    }
-    .arti {
-      font-size: 1.1em;
-      color: #34495e;
-      text-align: left;
-      margin-top: 10px;
-    }
-    .sura {
-      color: #555;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .tanggal {
-      color: #888;
-      font-size: 0.9em;
-      margin-top: 15px;
-    }
-    #search-box {
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      max-width: 700px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    input[type="text"], select {
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #bbb;
-      font-size: 1em;
-    }
-    input[type="text"] {
-      flex: 1;
-      min-width: 250px;
-    }
-    button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 10px;
-      background-color: #27ae60;
-      color: white;
-      cursor: pointer;
-      font-size: 1em;
-    }
-    button:hover {
-      background-color: #2ecc71;
-    }
-    .result {
-      background: #fff;
-      border-radius: 15px;
-      padding: 15px;
-      margin: 10px 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: left;
-      position: relative;
-    }
-    .copy-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #3498db;
-      border: none;
-      color: white;
-      padding: 5px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85em;
-    }
-    .copy-btn:hover {
-      background: #2980b9;
-    }
-    .result .arab {
-      direction: rtl;
-      font-size: 1.3em;
-      margin-bottom: 8px;
-    }
-    .result .indo {
-      font-size: 1em;
-      color: #333;
-    }
-    .result .ref {
-      color: #777;
-      font-size: 0.9em;
-      margin-top: 5px;
-    }
-    mark {
-      background: #ffeaa7;
-      font-weight: bold;
-      border-radius: 3px;
-      padding: 0 3px;
-    }
-    .pagination {
-      display: flex;
-      justify-content: center;
-      margin-top: 15px;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .pagination button {
-      background: #3498db;
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .pagination button.active {
-      background: #2ecc71;
-    }
-    .pagination button:hover {
-      background: #2980b9;
-    }
-    .counter {
-      font-size: 0.95em;
-      color: #444;
-      margin: 10px 0;
-    }
-   /* 💚 Support Me Button */
-    .support {
-      margin-top: 10px;
-      text-align: center;
-    }
-    .support button {
-      background: linear-gradient(135deg, #1abc9c, #16a085);
-      font-weight: 600;
-      border-radius: 25px;
-      padding: 10px 20px;
-    }
-    .support button:hover {
-      background: linear-gradient(135deg, #16a085, #1abc9c);
-    }
+<!-- Google Font Amiri -->
+<link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
 
-     @media (max-width: 600px) {
-      select, input, button { width: 100%; }
-      .controls { flex-direction: column; align-items: stretch; }
-    }
-  </style>
+<style>
+  body {
+    font-family: 'Amiri', serif;
+    background-color: #f9f7f3;
+    color: #3a3a3a;
+    text-align: center;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #2f5d50;
+    margin-bottom: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  th {
+    background-color: #b8d8b8;
+    color: #2f5d50;
+    padding: 10px;
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    font-size: 1.4em;
+  }
+
+  td:hover {
+    background-color: #f0f7f0;
+  }
+
+  .popup {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 85%;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .popup h2 {
+    font-size: 2.5em;
+    color: #2f5d50;
+  }
+
+  .popup p {
+    font-size: 1.1em;
+    color: #444;
+  }
+
+  .close-btn {
+    background-color: #2f5d50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 15px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -55%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+  }
+</style>
 </head>
+
 <body>
-    <h1>🌙 Ayat Al-Qur'an Hari Ini 🌙 </h1>
-  <div class="card">
-    <div id="ayat" class="ayat">Memuat ayat...</div>
-    <div id="arti" class="arti"></div>
-    <div id="sura" class="sura"></div>
-    <div id="tanggal" class="tanggal"></div>
-  </div>
+<h1>Huruf Hijaiyah & Sifatnya</h1>
+<p>Klik salah satu huruf untuk melihat makhraj dan sifatnya 🌿</p>
 
-  <h2>🔍 Cari Ayat Al-Qur'an</h2>
-  <div id="search-box">
-    <select id="surahSelect"></select>
-    <input type="text" id="searchInput" placeholder="Ketik teks Arab atau terjemahan..." />
-    <button onclick="cariAyat()">Cari</button>
-  </div>
+<table>
+  <tr>
+    <th>Huruf</th>
+    <th>Nama</th>
+  </tr>
+  <tr><td onclick="showPopup('أ','Alif','Pangkal tenggorokan','Jahr, Syiddah','Contoh: أَمَنَ')">أ</td><td>Alif</td></tr>
+  <tr><td onclick="showPopup('ب','Ba’','Dua bibir tertutup','Jahr, Qalqalah','Contoh: بَرَكَة')">ب</td><td>Ba’</td></tr>
+  <tr><td onclick="showPopup('ت','Ta’','Ujung lidah + gigi atas','Hams, Syiddah','Contoh: تَابَ')">ت</td><td>Ta’</td></tr>
+  <tr><td onclick="showPopup('ث','Tsa’','Ujung lidah + gigi atas','Hams, Rakhawah','Contoh: ثَوَاب')">ث</td><td>Tsa’</td></tr>
+  <tr><td onclick="showPopup('ج','Jim','Tengah lidah','Jahr, Qalqalah','Contoh: جَنَّة')">ج</td><td>Jim</td></tr>
+  <tr><td onclick="showPopup('ح','Ha’','Tengah tenggorokan','Hams, Rakhawah','Contoh: حَقّ')">ح</td><td>Ha’</td></tr>
+  <tr><td onclick="showPopup('خ','Kha’','Ujung tenggorokan','Hams, Isti‘laa’','Contoh: خَلَقَ')">خ</td><td>Kha’</td></tr>
+  <tr><td onclick="showPopup('ر','Ra’','Ujung lidah melengkung','Jahr, Takrir','Contoh: رَحْمَة')">ر</td><td>Ra’</td></tr>
+  <tr><td onclick="showPopup('ص','Shaad','Ujung lidah + langit-langit','Isti‘laa’, Itbaaq','Contoh: صَبْر')">ص</td><td>Shaad</td></tr>
+  <tr><td onclick="showPopup('ض','Dhad','Sisi lidah','Istithālah, Itbaaq','Contoh: ضَرَبَ')">ض</td><td>Dhad</td></tr>
+  <tr><td onclick="showPopup('ط','Thaa’','Ujung lidah kuat','Isti‘laa’, Qalqalah','Contoh: طَيْب')">ط</td><td>Thaa’</td></tr>
+  <tr><td onclick="showPopup('ظ','Zhaa’','Ujung lidah + gigi atas','Jahr, Itbaaq','Contoh: ظَلَمَ')">ظ</td><td>Zhaa’</td></tr>
+  <tr><td onclick="showPopup('ق','Qaaf','Pangkal lidah','Isti‘laa’, Qalqalah','Contoh: قَدَرَ')">ق</td><td>Qaaf</td></tr>
+  <tr><td onclick="showPopup('ك','Kaf','Belakang lidah','Hams, Qalqalah','Contoh: كَلِمَة')">ك</td><td>Kaf</td></tr>
+  <tr><td onclick="showPopup('ل','Lam','Ujung lidah + gusi','Tawassuth, Inhiraf','Contoh: لِسَان')">ل</td><td>Lam</td></tr>
+  <tr><td onclick="showPopup('م','Mim','Dua bibir tertutup','Jahr, Ghunnah','Contoh: مَلَك')">م</td><td>Mim</td></tr>
+  <tr><td onclick="showPopup('ن','Nun','Ujung lidah + hidung','Tawassuth, Ghunnah','Contoh: نُور')">ن</td><td>Nun</td></tr>
+  <tr><td onclick="showPopup('و','Wau','Dua bibir','Lin, Rakhawah','Contoh: وَرَقَ')">و</td><td>Wau</td></tr>
+  <tr><td onclick="showPopup('ي','Ya’','Tengah lidah','Lin, Rakhawah','Contoh: يَقُوْلُ')">ي</td><td>Ya’</td></tr>
+</table>
 
-  <div id="counter" class="counter"></div>
-  <div id="hasil" style="max-width: 700px;"></div>
-  <div id="pagination" class="pagination"></div>
+<div id="popup" class="popup">
+  <h2 id="huruf"></h2>
+  <p id="makhraj"></p>
+  <p id="sifat"></p>
+  <p id="contoh"></p>
+  <button class="close-btn" onclick="closePopup()">Tutup</button>
+</div>
 
- 
-  <div class="support">
-      <button onclick="window.open('http://lynk.id/alima/s/5k0eny0qk69k', '_blank')">💚 Support Me</button>
-  </div>
-  <br>
- <p>2025 - Teguh Sutanto</p>
- 
+<script>
+  function showPopup(huruf, nama, makhraj, sifat, contoh) {
+    document.getElementById('huruf').innerText = huruf + " – " + nama;
+    document.getElementById('makhraj').innerText = "📍 Makhraj: " + makhraj;
+    document.getElementById('sifat').innerText = "🌿 Sifat: " + sifat;
+    document.getElementById('contoh').innerText = contoh + " 🔊";
+    document.getElementById('popup').style.display = 'block';
+  }
 
-  <script>
-    let hasilPencarian = [];
-    const hasilPerHalaman = 10;
-    let halamanSaatIni = 1;
+  function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+  }
+</script>
 
-    // ==== Inisialisasi Dropdown Surah ====
-    function isiDropdownSurah() {
-      const select = document.getElementById("surahSelect");
-      const map = new Map();
-      QURAN_DATA.forEach(a => {
-        if (!map.has(a.suraIndex)) {
-          map.set(a.suraIndex, a.suraName);
-        }
-      });
-      const surahList = Array.from(map, ([index, name]) => ({ index, name })).sort((a,b)=>a.index-b.index);
-      select.innerHTML = '<option value="all">Semua Surah</option>' +
-        surahList.map(s => `<option value="${s.index}">${s.index}. ${s.name}</option>`).join("");
-    }
-
-    // ==== Ayat Hari Ini ====
-    function tampilkanAyatHariIni() {
-      const today = new Date();
-      const startOfYear = new Date(today.getFullYear(), 0, 0);
-      const diff = today - startOfYear;
-      const oneDay = 1000 * 60 * 60 * 24;
-      const dayOfYear = Math.floor(diff / oneDay);
-      const index = dayOfYear % QURAN_DATA.length;
-      const ayat = QURAN_DATA[index];
-      document.getElementById("ayat").textContent = ayat.arab;
-      document.getElementById("arti").textContent = ayat.indo;
-      document.getElementById("sura").textContent = `Surah ${ayat.suraName} (${ayat.suraIndex}:${ayat.ayaIndex})`;
-      document.getElementById("tanggal").textContent = today.toLocaleDateString("id-ID", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric"
-      });
-    }
-
-    // ==== Highlight ====
-    function highlight(text, query) {
-      if (!query) return text;
-      const regex = new RegExp(`(${query})`, "gi");
-      return text.replace(regex, "<mark>$1</mark>");
-    }
-
-    // ==== Salin ke Clipboard ====
-    function salinAyat(arab, indo, ref) {
-      const teks = `${arab}\n${indo}\n(${ref})`;
-      navigator.clipboard.writeText(teks).then(() => {
-        alert("✅ Ayat berhasil disalin ke clipboard!");
-      }).catch(() => {
-        alert("❌ Gagal menyalin ayat.");
-      });
-    }
-
-    // ==== Tampilkan Hasil ====
-    function tampilkanHasil(halaman = 1) {
-      const hasilDiv = document.getElementById("hasil");
-      hasilDiv.innerHTML = "";
-      const awal = (halaman - 1) * hasilPerHalaman;
-      const akhir = awal + hasilPerHalaman;
-      const subset = hasilPencarian.slice(awal, akhir);
-      const query = document.getElementById("searchInput").value.trim();
-      const total = hasilPencarian.length;
-
-      const counterDiv = document.getElementById("counter");
-      if (total > 0) {
-        counterDiv.textContent = `Ditemukan ${total} ayat (Menampilkan ${awal + 1}–${Math.min(akhir, total)} dari ${total})`;
-      } else {
-        counterDiv.textContent = "";
-      }
-
-      if (subset.length === 0) {
-        hasilDiv.innerHTML = "<p>Tidak ada hasil pada halaman ini.</p>";
-        return;
-      }
-
-      subset.forEach(a => {
-        const div = document.createElement("div");
-        div.className = "result";
-        const ref = `Surah ${a.suraName} (${a.suraIndex}:${a.ayaIndex})`;
-        div.innerHTML = `
-          <button class="copy-btn" onclick="salinAyat('${a.arab.replace(/'/g,"\\'")}', '${a.indo.replace(/'/g,"\\'")}', '${ref.replace(/'/g,"\\'")}')">📋</button>
-          <div class="arab">${highlight(a.arab, query)}</div>
-          <div class="indo">${highlight(a.indo, query)}</div>
-          <div class="ref">${ref}</div>
-        `;
-        hasilDiv.appendChild(div);
-      });
-
-      buatPagination();
-    }
-
-    // ==== Pagination ====
-    function buatPagination() {
-      const totalHalaman = Math.ceil(hasilPencarian.length / hasilPerHalaman);
-      const pagDiv = document.getElementById("pagination");
-      pagDiv.innerHTML = "";
-      if (totalHalaman <= 1) return;
-      for (let i = 1; i <= totalHalaman; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        if (i === halamanSaatIni) btn.classList.add("active");
-        btn.onclick = () => { halamanSaatIni = i; tampilkanHasil(i); };
-        pagDiv.appendChild(btn);
-      }
-    }
-
-    // ==== Cari Ayat ====
-    function cariAyat() {
-      const query = document.getElementById("searchInput").value.trim().toLowerCase();
-      const surahFilter = document.getElementById("surahSelect").value;
-      const hasilDiv = document.getElementById("hasil");
-      hasilDiv.innerHTML = "";
-      document.getElementById("pagination").innerHTML = "";
-      document.getElementById("counter").textContent = "";
-
-      if (!query && surahFilter === "all") {
-        hasilDiv.innerHTML = "<p>Ketik kata kunci atau pilih surah untuk mencari ayat.</p>";
-        return;
-      }
-
-      hasilPencarian = QURAN_DATA.filter(a => {
-        const cocokTeks = !query || a.arab.toLowerCase().includes(query) || a.indo.toLowerCase().includes(query);
-        const cocokSurah = surahFilter === "all" || a.suraIndex.toString() === surahFilter;
-        return cocokTeks && cocokSurah;
-      });
-
-      if (hasilPencarian.length === 0) {
-        hasilDiv.innerHTML = "<p>Tidak ditemukan ayat yang cocok.</p>";
-        return;
-      }
-
-      halamanSaatIni = 1;
-      tampilkanHasil(1);
-    }
-
-    isiDropdownSurah();
-    tampilkanAyatHariIni();
-  </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
