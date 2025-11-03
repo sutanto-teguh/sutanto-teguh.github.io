@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroid Shooter</title>
+    <!-- Using Inter font for clean text -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS for a space theme game */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #0d1117; /* Dark space background */
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            overflow: hidden; /* Prevent scrolling */
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(145deg, #161b22, #0d1117);
+            border: 4px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.15), 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        #gameCanvas {
+            border: 2px solid #00f0ff; /* Neon border */
+            border-radius: 8px;
+            background-color: #000000;
+            touch-action: none; /* Important for touch input */
+            margin-bottom: 20px;
+        }
+
+        #controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .game-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            /* Default button style */
+            box-shadow: 0 4px #005666;
+            background-color: #0088aa;
+            color: #ffffff;
+        }
+        
+        /* New style for the Gemini button */
+        .llm-button {
+            background-color: #7b00ff;
+            box-shadow: 0 4px #4c0099;
+        }
+        .llm-button:hover {
+            background-color: #9c00ff;
+            box-shadow: 0 2px #4c0099;
+            transform: translateY(2px);
+        }
+        .llm-button:active {
+            box-shadow: none;
+            transform: translateY(4px);
+        }
+
+
+        .game-button:hover {
+            background-color: #00aaff;
+            box-shadow: 0 2px #005666;
+            transform: translateY(2px);
+        }
+
+        .game-button:active {
+            box-shadow: none;
+            transform: translateY(4px);
+        }
+
+        #score-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00f0ff; /* Neon blue */
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px #00f0ff;
+        }
+
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 25px 40px;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 3px solid #ff0077;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255, 0, 119, 0.5);
+            font-size: 20px;
+            color: #ffffff;
+            display: none; /* Hidden by default */
+            max-width: 90vw;
+            width: 500px;
+        }
+        
+        #message-box p {
+            margin: 10px 0;
+            font-weight: 400;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        /* Loading indicator for API call */
+        .loading-dots {
+            font-size: 40px;
+            color: #ffcc00;
+            animation: blink 1s steps(3, start) infinite;
+            overflow: hidden;
+            height: 1.2em;
+            margin-top: 10px;
+        }
+        @keyframes blink {
+            to { visibility: hidden; }
+        }
+
+        /* Mobile Controls Overlay */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 50;
+        }
+
+        .touch-area {
+            position: absolute;
+            opacity: 0.05; /* Barely visible touch targets */
+            z-index: 60;
+        }
+
+        /* Firing area (right side) */
+        #fire-area {
+            right: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background-color: #ff0077;
+        }
+
+        /* Movement area (left side) */
+        #move-area {
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background-color: #00f0ff;
+        }
+
+        @media (max-width: 768px) {
+            #controls {
+                display: none; /* Hide desktop buttons */
+            }
+            #mobile-controls {
+                display: block; /* Show touch controls */
+            }
+            #game-container {
+                width: 95%;
+                padding: 10px;
+            }
+            #gameCanvas {
+                width: 100%;
+                height: 400px; /* Adjust height for mobile */
+            }
+            #message-box {
+                font-size: 16px;
+                padding: 15px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="score-display">Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="controls">
+        <button class="game-button" id="startButton">Start Game</button>
+        <p style="color: #ccc; font-size: 14px; margin: 0;">Use WASD or Arrows to move, Mouse to aim/fire, or Space to shoot.</p>
+    </div>
+    
+    <!-- Mobile/Touch Controls Overlay (invisible to user, for capturing touch events) -->
+    <div id="mobile-controls">
+        <!-- Tapping on the right fires -->
+        <div class="touch-area" id="fire-area"></div>
+        <!-- Swiping/touching on the left moves/aims -->
+        <div class="touch-area" id="move-area"></div>
+    </div>
+
+</div>
+
+<div id="message-box">
+    <h3 id="message-title" style="color:#00f0ff;">Welcome!</h3>
+    <div id="message-content">
+        <p id="message-text">Press Start Game or tap/swipe the screen to begin the defense of the galaxy!</p>
+    </div>
+    <div id="message-actions" style="margin-top: 20px;">
+        <button class="game-button" id="message-button" onclick="startGame()">Start</button>
+    </div>
+</div>
+
+
+<script>
+    // Constants and Global Variables
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score-display');
+    const messageBox = document.getElementById('message-box');
+    const messageTitle = document.getElementById('message-title');
+    const messageContent = document.getElementById('message-content');
+    const messageActions = document.getElementById('message-actions');
+    const fireArea = document.getElementById('fire-area');
+    const moveArea = document.getElementById('move-area');
+    const startButton = document.getElementById('startButton');
+
+    const WIDTH = 800;
+    const HEIGHT = 600;
+    const BULLET_COOLDOWN = 150; // ms between shots
+    const ASTEROID_SPAWN_INTERVAL = 1000; // ms for new asteroid spawn
+
+    let lastTime = 0;
+    let deltaTime = 0;
+    let gameInterval;
+
+    let gameState = 'start'; // 'start', 'playing', 'game_over', 'debriefing'
+    let score = 0;
+    let lastShotTime = 0;
+    let lastAsteroidSpawn = 0;
+
+    let player = null;
+    let bullets = [];
+    let asteroids = [];
+
+    // Set initial canvas size
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+
+    // Gemini API Configuration
+    const API_MODEL = "gemini-2.5-flash-preview-09-2025";
+    const apiKey = ""; // Canvas will provide this if empty
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
+
+
+    // --- Utility Functions ---
+
+    /**
+     * Calculates the distance between two points.
+     * @param {number} x1 
+     * @param {number} y1 
+     * @param {number} x2 
+     * @param {number} y2 
+     * @returns {number}
+     */
+    function dist(x1, y1, x2, y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    }
+
+    /**
+     * Converts degrees to radians.
+     * @param {number} degrees 
+     * @returns {number}
+     */
+    function degToRad(degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+    /**
+     * Displays a message overlay (instead of alert/confirm).
+     * @param {string} title 
+     * @param {string} contentHTML 
+     * @param {Array<Object>} actions - [{text: string, action: function, className: string}]
+     */
+    function showMessage(title, contentHTML, actions) {
+        messageTitle.innerHTML = title;
+        messageContent.innerHTML = contentHTML;
+        
+        messageActions.innerHTML = '';
+        actions.forEach(action => {
+            const button = document.createElement('button');
+            button.className = `game-button ${action.className || ''}`;
+            button.textContent = action.text;
+            button.onclick = action.action;
+            messageActions.appendChild(button);
+        });
+        
+        messageBox.style.display = 'block';
+    }
+
+    function hideMessage() {
+        messageBox.style.display = 'none';
+    }
+
+    // --- Game Classes (Player, Bullet, Asteroid remain the same) ---
+
+    class Player {
+        constructor() {
+            this.x = WIDTH / 2;
+            this.y = HEIGHT - 50;
+            this.size = 20;
+            this.speed = 300; // pixels per second
+            this.angle = -90; // Start pointing up (degrees)
+            this.radius = 15;
+            this.life = 3;
+        }
+
+        /**
+         * Draws the spaceship (simple triangle).
+         */
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(degToRad(this.angle));
+
+            // Thruster effect (optional glow)
+            if (keys.ArrowUp || keys.w) {
+                ctx.fillStyle = '#ff6600';
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.moveTo(-5, this.size / 2);
+                ctx.lineTo(5, this.size / 2);
+                ctx.lineTo(0, this.size + 10);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // Ship Body (Neon Cyan)
+            ctx.fillStyle = '#00f0ff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            // Nose
+            ctx.moveTo(0, -this.size); 
+            // Right wing
+            ctx.lineTo(this.size / 1.5, this.size / 2);
+            // Left wing
+            ctx.lineTo(-this.size / 1.5, this.size / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        /**
+         * Updates the player position based on key input and delta time.
+         * @param {number} dt Delta time in seconds.
+         */
+        update(dt) {
+            let dx = 0, dy = 0;
+
+            // Movement
+            if (keys.ArrowUp || keys.w) dy -= 1;
+            if (keys.ArrowDown || keys.s) dy += 1;
+            if (keys.ArrowLeft || keys.a) dx -= 1;
+            if (keys.ArrowRight || keys.d) dx += 1;
+
+            if (dx !== 0 || dy !== 0) {
+                this.x += dx * this.speed * dt;
+                this.y += dy * this.speed * dt;
+            }
+
+            // Clamping position within bounds
+            this.x = Math.max(this.radius, Math.min(this.x, WIDTH - this.radius));
+            this.y = Math.max(this.radius, Math.min(this.y, HEIGHT - this.radius));
+
+            // Rotation (point towards where the mouse/touch is, or default to current)
+            if (keys.MouseX !== undefined) {
+                // Calculate angle based on the aiming coordinate
+                this.angle = Math.atan2(keys.MouseY - this.y, keys.MouseX - this.x) * 180 / Math.PI + 90;
+            } 
+        }
+    }
+
+    class Bullet {
+        constructor(x, y, angle) {
+            this.x = x;
+            this.y = y;
+            this.speed = 800; // pixels per second
+            this.radius = 3;
+            // Convert angle from degrees (ship orientation) to radians for physics
+            let rad = degToRad(angle - 90); 
+            this.vx = Math.cos(rad) * this.speed;
+            this.vy = Math.sin(rad) * this.speed;
+        }
+
+        update(dt) {
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
+        }
+
+        draw() {
+            ctx.fillStyle = '#ffcc00'; // Energy beam yellow
+            ctx.shadowColor = '#ffcc00';
+            ctx.shadowBlur = 5;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        isOffScreen() {
+            return this.x < 0 || this.x > WIDTH || this.y < 0 || this.y > HEIGHT;
+        }
+    }
+
+    class Asteroid {
+        constructor(x, y, radius) {
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            // Increase speed slightly based on size
+            this.speed = 50 + Math.random() * 100 + (60 - radius); 
+            // Asteroids move downward with a slight horizontal drift
+            this.vx = (Math.random() - 0.5) * 50; 
+            this.vy = this.speed;
+            this.rotationSpeed = (Math.random() - 0.5) * 0.5; // Faster rotation
+            this.angle = Math.random() * Math.PI * 2;
+            this.color = `hsl(40, 30%, ${60 + Math.random() * 20}%)`; // Brownish-grey
+            
+            // Generate a simple jagged shape (polygon points)
+            this.points = [];
+            let numPoints = 8 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < numPoints; i++) {
+                let r = radius * (0.7 + Math.random() * 0.3); // Radius variance
+                let a = (Math.PI * 2 / numPoints) * i;
+                this.points.push({ r: r, a: a });
+            }
+        }
+
+        update(dt) {
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
+            this.angle += this.rotationSpeed * dt;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+
+            ctx.fillStyle = this.color;
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            for (let i = 0; i < this.points.length; i++) {
+                const p = this.points[i];
+                const px = p.r * Math.cos(p.a);
+                const py = p.r * Math.sin(p.a);
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        isOffScreen() {
+            return this.y - this.radius > HEIGHT;
+        }
+    }
+
+    // --- Game Logic ---
+
+    function resetGame() {
+        score = 0;
+        scoreDisplay.textContent = 'Score: 0';
+        bullets = [];
+        asteroids = [];
+        player = new Player();
+        lastShotTime = 0;
+        lastAsteroidSpawn = 0;
+        gameState = 'playing';
+        hideMessage();
+        gameLoop(0); // Restart the animation loop
+    }
+
+    function startGame() {
+        if (gameState !== 'playing') {
+            resetGame();
+        }
+    }
+
+    function gameOver() {
+        if (gameState !== 'game_over') {
+            gameState = 'game_over';
+            
+            const content = `
+                <p style="text-align: center; font-size: 1.2em;">
+                    Final Score: 
+                    <span style='color:#00f0ff; font-weight:700;'>${score}</span>
+                </p>
+                <p style="text-align: center;">Your mission is complete. Requesting operational analysis from Command...</p>
+            `;
+            const actions = [
+                {
+                    text: "Play Again", 
+                    action: resetGame, 
+                    className: ''
+                },
+                {
+                    text: "✨ Galactic Debriefing Report ✨", 
+                    action: generateDebrief, 
+                    className: 'llm-button'
+                }
+            ];
+
+            showMessage("MISSION FAILED", content, actions);
+        }
+    }
+    
+    // --- LLM Integration ---
+
+    /**
+     * Calls the Gemini API to generate a personalized mission debrief.
+     */
+    async function generateDebrief() {
+        gameState = 'debriefing'; // Prevent game from auto-restarting
+
+        // 1. Show Loading State
+        showMessage(
+            "COMM LINK OPEN", 
+            `<p style="text-align: center;">Processing data on Command AI servers...</p><div class="loading-dots">...</div>`, 
+            []
+        );
+
+        const scoreTier = score < 500 ? "poor (Cadet level)" : 
+                          score < 1500 ? "average (Pilot level)" : 
+                          score < 3000 ? "good (Commander level)" : 
+                          "legendary (Ace level)";
+                          
+        const systemPrompt = `You are the sarcastic, highly competent, and slightly weary AI Commander of the Galactic Defense Fleet. Your task is to provide a concise, single-paragraph "Mission Debriefing Report" to a pilot based on their asteroid-shooting score. Do not start with "Mission Debriefing Report" or similar headings. Use a formal, critical, yet ultimately dramatic tone. The score and performance tier is: ${score} (${scoreTier}).`;
+        
+        const userQuery = `Write the debriefing report for a score of ${score}. Conclude with a clear, single sentence recommendation for the pilot's next course of action.`;
+
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+        };
+        
+        // 2. Make API Call (with simple retry logic for robustness)
+        let generatedText = "ERROR: Failed to establish contact with Command AI. Check console for details.";
+        const MAX_RETRIES = 3;
+        let attempt = 0;
+
+        while (attempt < MAX_RETRIES) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    generatedText = candidate.content.parts[0].text;
+                    break; // Success
+                } else {
+                    throw new Error("Invalid API response structure.");
+                }
+
+            } catch (error) {
+                console.error(`Attempt ${attempt + 1} failed:`, error);
+                attempt++;
+                if (attempt < MAX_RETRIES) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt))); // Exponential backoff
+                }
+            }
+        }
+
+
+        // 3. Update Message Box with Debrief
+        const content = `
+            <p style="text-align: center; font-size: 1.2em; color: #ff0077; font-weight: bold;">
+                -- CLASSIFIED DEBRIEFING INITIATED --
+            </p>
+            <p style="text-align: justify; padding: 0 10px; color: #cccccc;">${generatedText}</p>
+        `;
+        const actions = [
+            {
+                text: "Play Again", 
+                action: resetGame, 
+                className: ''
+            }
+        ];
+
+        showMessage("MISSION DEBRIEF COMPLETE", content, actions);
+    }
+    // --- End LLM Integration ---
+
+
+    function spawnAsteroid() {
+        // Randomly spawn an asteroid at the top of the screen
+        const radius = 20 + Math.random() * 40; // Size 20 to 60
+        const x = Math.random() * WIDTH;
+        const y = -radius; // Start just above the canvas
+        asteroids.push(new Asteroid(x, y, radius));
+    }
+
+    function fireBullet() {
+        const currentTime = performance.now();
+        if (currentTime - lastShotTime > BULLET_COOLDOWN) {
+            // Create bullet originating from the front of the ship
+            const offset = player.size / 2;
+            let rad = degToRad(player.angle - 90); 
+            const startX = player.x + Math.cos(rad) * offset;
+            const startY = player.y + Math.sin(rad) * offset;
+
+            bullets.push(new Bullet(startX, startY, player.angle));
+            lastShotTime = currentTime;
+        }
+    }
+
+    function updateGame(currentTime) {
+        if (gameState !== 'playing') return;
+
+        // Calculate delta time in seconds
+        deltaTime = (currentTime - lastTime) / 1000;
+        lastTime = currentTime;
+
+        // 1. Player Update and Input
+        player.update(deltaTime);
+        if (keys.Space || keys.Click) {
+            fireBullet();
+        }
+
+        // 2. Asteroid Spawning (Difficulty scales with score)
+        const spawnRateModifier = 1 - Math.min(score / 5000, 0.8);
+        const spawnInterval = ASTEROID_SPAWN_INTERVAL * spawnRateModifier;
+        
+        if (currentTime - lastAsteroidSpawn > spawnInterval) {
+            spawnAsteroid();
+            lastAsteroidSpawn = currentTime;
+        }
+
+        // 3. Update Bullets and Asteroids
+        bullets.forEach(b => b.update(deltaTime));
+        asteroids.forEach(a => a.update(deltaTime));
+
+        // 4. Collision Detection & Cleanup
+
+        // Check Bullet-Asteroid collisions
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            const b = bullets[i];
+            let hit = false;
+            for (let j = asteroids.length - 1; j >= 0; j--) {
+                const a = asteroids[j];
+                // Use the radius property for simplified circular collision check
+                if (dist(b.x, b.y, a.x, a.y) < b.radius + a.radius * 0.8) { // 80% radius tolerance
+                    // HIT!
+                    score += Math.floor(a.radius);
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    
+                    // Remove asteroid and set flag to remove bullet
+                    asteroids.splice(j, 1);
+                    hit = true;
+                    break; 
+                }
+            }
+            // Remove bullet if it hit an asteroid or went off screen
+            if (hit || b.isOffScreen()) {
+                bullets.splice(i, 1);
+            }
+        }
+        
+        // Check Player-Asteroid collisions
+        for (let i = asteroids.length - 1; i >= 0; i--) {
+            const a = asteroids[i];
+            // Use the radius property for simplified circular collision check
+            if (dist(player.x, player.y, a.x, a.y) < player.radius + a.radius * 0.8) { 
+                // Player HIT!
+                gameOver();
+                return;
+            }
+            // Remove asteroid if it went off screen without hitting the player
+            if (a.isOffScreen()) {
+                 asteroids.splice(i, 1);
+            }
+        }
+    }
+
+    function drawGame() {
+        // Clear canvas
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+        // Draw Game Elements
+        player.draw();
+        bullets.forEach(b => b.draw());
+        asteroids.forEach(a => a.draw());
+
+        // Draw instructions/status for touch on mobile
+        if (window.innerWidth <= 768 && gameState === 'playing') {
+             ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+             ctx.font = '14px Inter';
+             ctx.textAlign = 'left';
+             ctx.fillText('Move/Aim (Left)', 10, HEIGHT - 10);
+             ctx.textAlign = 'right';
+             ctx.fillText('Fire (Right)', WIDTH - 10, HEIGHT - 10);
+        }
+    }
+
+    function gameLoop(currentTime) {
+        if (gameState !== 'playing') return;
+
+        updateGame(currentTime);
+        drawGame();
+        
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // --- Input Handling (Keyboard and Mouse/Touch) ---
+
+    let keys = {
+        ArrowUp: false, w: false, 
+        ArrowDown: false, s: false, 
+        ArrowLeft: false, a: false, 
+        ArrowRight: false, d: false, 
+        Space: false,
+        Click: false, // Firing state for mouse/touch
+        MouseX: undefined, MouseY: undefined // Mouse/Touch position for aiming
+    };
+
+    // Keyboard Input Handlers
+    document.addEventListener('keydown', (e) => {
+        if (e.repeat) return;
+        keys[e.key] = true;
+        if (gameState === 'start' && e.key === ' ') {
+            e.preventDefault();
+            startGame();
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+    });
+
+    // Mouse/Aiming Input Handlers (Desktop)
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        keys.MouseX = e.clientX - rect.left;
+        keys.MouseY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        // Stop aiming when mouse leaves the canvas
+        keys.MouseX = undefined;
+        keys.MouseY = undefined;
+    });
+    
+    // Firing using mouse click
+    canvas.addEventListener('mousedown', () => {
+        keys.Click = true;
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        keys.Click = false;
+    });
+    
+    // --- Touch Input Handlers (Mobile) ---
+
+    // Touch movement/aiming on the left side
+    moveArea.addEventListener('touchmove', (e) => {
+        e.preventDefault(); // Prevent scrolling
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        
+        // Aiming logic based on touch position relative to the canvas
+        keys.MouseX = touch.clientX - rect.left;
+        keys.MouseY = touch.clientY - rect.top;
+        
+        // Basic movement mapping (to simulate key presses for movement)
+        const touchX = touch.clientX;
+        const touchY = touch.clientY;
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // Calculate center of the movement area (quarter of the screen width)
+        const centerX = canvasRect.left + canvasRect.width / 4; 
+        const centerY = canvasRect.top + canvasRect.height / 2;
+
+        // Set simulated key states based on relative position in the move area
+        keys.ArrowLeft = touchX < centerX - 50;
+        keys.ArrowRight = touchX > centerX + 50;
+        keys.ArrowUp = touchY < centerY - 50;
+        keys.ArrowDown = touchY > centerY + 50;
+    });
+
+    moveArea.addEventListener('touchend', (e) => {
+        // Stop movement and reset aiming when touch ends
+        keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
+        keys.MouseX = undefined;
+        keys.MouseY = undefined;
+    });
+
+    // Touch firing on the right side
+    fireArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        keys.Click = true;
+        
+        // Set aiming to the first touch point on the fire area
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        keys.MouseX = touch.clientX - rect.left;
+        keys.MouseY = touch.clientY - rect.top;
+    });
+
+    fireArea.addEventListener('touchend', () => {
+        keys.Click = false;
+        keys.MouseX = undefined;
+        keys.MouseY = undefined;
+    });
+    
+    // --- Initialization ---
+
+    startButton.onclick = startGame;
+
+    window.onload = function() {
+        // Initial setup message
+        showMessage(
+            "ASTEROID DEFENSE", 
+            "The sector is under attack! Defend your position against the asteroid field. <br><br>Controls: <span style='color:#00f0ff;'>WASD/Arrows</span> to move, <span style='color:#00f0ff;'>Mouse/Touch</span> to aim and fire, or <span style='color:#00f0ff;'>Space</span> to fire.", 
+            [
+                {text: "Start Game", action: startGame, className: ''}
+            ]
+        );
+    };
+
+</script>
+</body>
+</html>
