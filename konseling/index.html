@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BK-Connect | AI Powered Counseling</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Markdown Parser (Marked) untuk format chat AI -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden { display: none !important; }
+        /* Typing dot animation */
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="navigateTo('landing')">
+            <i class="ph-fill ph-sparkle text-yellow-300 text-2xl"></i>
+            <h1 class="font-bold text-lg md:text-xl">BK-AI <span class="font-light text-sm opacity-80">| Smart Counseling by Teguh Sutanto</span></h1>
+        </div>
+        <button id="btn-home" onclick="navigateTo('landing')" class="hidden text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition backdrop-blur-sm">
+            Menu Utama
+        </button>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 w-full flex-grow relative">
+        
+        <!-- GLOBAL LOADER OVERLAY -->
+        <div id="global-loader" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center animate-bounce-small">
+                <i class="ph-duotone ph-brain text-4xl text-teal-600 animate-pulse mb-3"></i>
+                <p class="font-semibold text-gray-700">AI sedang menganalisis...</p>
+                <p class="text-xs text-gray-500 mt-1">Mohon tunggu sebentar</p>
+            </div>
+        </div>
+
+        <!-- 1. LANDING PAGE -->
+        <div id="view-landing" class="fade-in flex flex-col items-center justify-center py-10">
+            <div class="text-center mb-10 max-w-lg">
+                <div class="inline-flex items-center gap-2 bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-xs font-bold mb-4 border border-teal-200">
+                    <i class="ph-fill ph-sparkle"></i> Powered by Gemini AI
+                </div>
+                <h2 class="text-3xl font-bold text-teal-800 mb-4">Teman Cerita Pintar</h2>
+                <p class="text-slate-600 mb-6 leading-relaxed">
+                    Ceritakan masalahmu pada AI Konselor kami. Dia akan mendengarkan tanpa menghakimi, 24/7.
+                    Data akan diteruskan ke Guru BK hanya jika kamu setuju.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+                <!-- Kartu Siswa -->
+                <div onclick="navigateTo('student-register')" class="bg-white p-8 rounded-xl shadow-lg border-2 border-transparent hover:border-teal-400 cursor-pointer transition transform hover:-translate-y-1 flex flex-col items-center text-center group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-bl-lg">AI ON</div>
+                    <div class="bg-teal-100 p-4 rounded-full mb-4 group-hover:bg-teal-200 transition">
+                        <i class="ph-duotone ph-robot text-3xl text-teal-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Curhat dengan AI</h3>
+                    <p class="text-sm text-slate-500">Mulai percakapan interaktif dengan asisten cerdas.</p>
+                </div>
+
+                <!-- Kartu Guru BK -->
+                <div onclick="navigateTo('counselor-login')" class="bg-white p-8 rounded-xl shadow-lg border-2 border-transparent hover:border-indigo-400 cursor-pointer transition transform hover:-translate-y-1 flex flex-col items-center text-center group">
+                    <div class="bg-indigo-100 p-4 rounded-full mb-4 group-hover:bg-indigo-200 transition">
+                        <i class="ph-duotone ph-chalkboard-teacher text-3xl text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Dashboard Guru</h3>
+                    <p class="text-sm text-slate-500">Monitoring dengan ringkasan otomatis AI.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. STUDENT VIEW: REGISTER -->
+        <div id="view-student-register" class="hidden fade-in bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto mt-10 border border-gray-100">
+            <h2 class="text-2xl font-bold text-teal-700 mb-6 flex items-center gap-2">
+                <i class="ph-duotone ph-id-card"></i> Mulai Sesi
+            </h2>
+            <form onsubmit="startChat(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nama Kamu</label>
+                    <input id="input-name" required type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm border p-2.5 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition" placeholder="Misal: Budi">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Kelas</label>
+                    <input id="input-class" required type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm border p-2.5 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition" placeholder="Misal: XII IPA 1">
+                </div>
+                <div class="bg-teal-50 p-4 rounded-lg text-sm text-teal-800 border border-teal-100 flex gap-2">
+                    <i class="ph-fill ph-info text-lg shrink-0"></i>
+                    <p>AI akan merespon curhatmu. Percakapan ini privat sampai kamu memutuskan mengirimnya ke Guru BK.</p>
+                </div>
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-2.5 px-4 rounded-lg transition font-medium flex justify-center items-center gap-2 shadow-lg shadow-teal-600/20">
+                    <i class="ph-bold ph-chat-teardrop-text"></i> Mulai Chat
+                </button>
+            </form>
+        </div>
+
+        <!-- 3. STUDENT VIEW: CHAT -->
+        <div id="view-student-chat" class="hidden fade-in bg-white rounded-xl shadow-xl overflow-hidden flex flex-col h-[85vh] border border-gray-200">
+            <div class="bg-white border-b p-4 flex justify-between items-center shadow-sm z-10">
+                <div class="flex items-center gap-3">
+                    <div class="bg-teal-100 p-2 rounded-full">
+                        <i class="ph-duotone ph-robot text-teal-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-sm">Teman BK (AI)</h3>
+                        <p class="text-xs text-green-600 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online
+                        </p>
+                    </div>
+                </div>
+                <button onclick="finishSession()" class="bg-teal-50 text-teal-700 border border-teal-200 text-xs font-bold px-4 py-2 rounded-full hover:bg-teal-100 transition flex items-center gap-1.5 group">
+                    <i class="ph-bold ph-paper-plane-right group-hover:translate-x-0.5 transition-transform"></i> 
+                    Selesai & Kirim
+                </button>
+            </div>
+
+            <!-- Area Pesan -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 scroll-smooth">
+                <!-- Pesan akan muncul di sini via JS -->
+            </div>
+
+            <!-- Indikator Mengetik -->
+            <div id="typing-indicator" class="hidden px-4 py-2 bg-slate-50/50">
+                <div class="bg-white border border-gray-200 rounded-2xl rounded-bl-none px-4 py-3 w-fit shadow-sm flex items-center gap-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <form onsubmit="sendMessage(event)" class="p-3 md:p-4 bg-white border-t border-gray-100 flex gap-2 items-end">
+                <div class="flex-1 relative">
+                    <textarea id="input-message" rows="1" placeholder="Ceritakan apa yang kamu rasakan..." class="w-full bg-gray-50 border border-gray-300 rounded-2xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition resize-none text-sm leading-relaxed" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                </div>
+                <button type="submit" id="btn-send" class="bg-teal-600 text-white p-3 rounded-full hover:bg-teal-700 transition shadow-lg shadow-teal-600/20 mb-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="ph-bold ph-paper-plane-right text-lg"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- 4. STUDENT VIEW: SUMMARY -->
+        <div id="view-student-summary" class="hidden fade-in bg-white p-10 rounded-xl shadow-lg max-w-lg mx-auto text-center mt-10 border border-teal-100 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-emerald-500"></div>
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-teal-50 mb-6 ring-4 ring-teal-50">
+                <i class="ph-duotone ph-check-circle text-4xl text-teal-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Terkirim ke Guru BK</h2>
+            <p class="text-gray-500 mb-8 leading-relaxed">
+                Terima kasih, <span id="summary-name" class="font-semibold text-teal-700"></span>. 
+                AI telah membuat ringkasan singkat untuk Guru BK agar beliau bisa memahami situasimu lebih cepat.
+            </p>
+            <div class="bg-gray-50 p-4 rounded-lg text-left text-sm text-gray-600 mb-8 border border-gray-200">
+                <p class="font-bold text-xs text-gray-400 uppercase tracking-wider mb-2">Analisis AI:</p>
+                <p id="user-feedback-summary" class="italic">"..."</p>
+            </div>
+            <button onclick="navigateTo('landing')" class="w-full bg-slate-800 text-white px-6 py-3 rounded-lg hover:bg-slate-900 transition font-medium">
+                Kembali ke Halaman Utama
+            </button>
+        </div>
+
+        <!-- 5. COUNSELOR VIEW: LOGIN -->
+        <div id="view-counselor-login" class="hidden fade-in flex flex-col items-center justify-center pt-20">
+            <div class="bg-white p-8 rounded-xl shadow-2xl border-t-4 border-indigo-600 w-full max-w-sm">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i class="ph-duotone ph-lock-key text-indigo-600"></i> Login Guru BK
+                </h2>
+                <form onsubmit="handleLogin(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password Akses</label>
+                        <input id="input-password" type="password" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition font-medium shadow-lg shadow-indigo-600/20">
+                        Masuk Dashboard
+                    </button>
+                    <p class="text-xs text-center text-gray-400">Password Demo: <span class="font-mono bg-gray-100 px-1 rounded">admin123</span></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- 6. COUNSELOR VIEW: DASHBOARD -->
+        <div id="view-counselor-dashboard" class="hidden fade-in bg-white rounded-xl shadow-lg p-6 min-h-[60vh]">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        <i class="ph-duotone ph-chart-pie-slice text-indigo-600"></i> Dashboard Konseling
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-1">Monitoring siswa dengan bantuan AI Analysis</p>
+                </div>
+                <div class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-sm font-semibold border border-indigo-100">
+                    Total Sesi: <span id="session-count">0</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr class="text-gray-500 text-xs uppercase tracking-wider">
+                            <th class="px-6 py-3 font-semibold">Siswa</th>
+                            <th class="px-6 py-3 font-semibold">Waktu</th>
+                            <th class="px-6 py-3 font-semibold">AI Risk Level</th>
+                            <th class="px-6 py-3 font-semibold">Ringkasan Masalah</th>
+                            <th class="px-6 py-3 font-semibold text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-body" class="divide-y divide-gray-100 bg-white">
+                        <!-- Rows via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 7. COUNSELOR VIEW: DETAIL -->
+        <div id="view-counselor-detail" class="hidden fade-in bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 h-[85vh] flex flex-col">
+            <div class="bg-white border-b p-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <button onclick="navigateTo('counselor-dashboard')" class="hover:bg-gray-100 p-2 rounded-full transition text-gray-600">
+                        <i class="ph-bold ph-arrow-left text-xl"></i>
+                    </button>
+                    <div>
+                        <h3 id="detail-name" class="font-bold text-lg text-gray-800">Nama Siswa</h3>
+                        <p id="detail-info" class="text-xs text-gray-500">Kelas • Waktu</p>
+                    </div>
+                </div>
+                <span id="detail-risk" class="px-3 py-1 rounded-full text-xs font-bold border">
+                    Risiko
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 h-full overflow-hidden">
+                <!-- Chat History (Left/Top) -->
+                <div id="detail-messages" class="md:col-span-2 flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50 border-r border-gray-200">
+                    <!-- Messages -->
+                </div>
+                
+                <!-- AI Insights (Right/Bottom) -->
+                <div class="bg-white p-6 overflow-y-auto">
+                    <h4 class="font-bold text-sm text-indigo-700 mb-4 flex items-center gap-2">
+                        <i class="ph-fill ph-sparkle"></i> Analisis AI
+                    </h4>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Ringkasan</p>
+                            <p id="detail-summary" class="text-sm text-gray-700 leading-relaxed"></p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Saran Tindakan</p>
+                            <div id="detail-advice" class="text-sm text-gray-700 bg-indigo-50 p-3 rounded-lg border border-indigo-100"></div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100">
+                            <p class="text-xs text-gray-400 italic">Analisis ini dibuat otomatis oleh AI. Gunakan sebagai referensi awal, bukan diagnosis final.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- LOGIC -->
+    <script>
+        // API Configuration
+        const apiKey = "AIzaSyCTM8kD8MBCDNUCknQkqMx___0KiD9hw8s"; // Disuntikkan oleh environment
+        const MODEL_CHAT = 'gemini-2.5-flash-preview-09-2025';
+
+        // --- MOCK DATA ---
+        let sessions = [
+            {
+                id: 1,
+                studentName: "Andi Saputra",
+                class: "XI IPA 2",
+                date: "2023-10-24 14:30",
+                riskLevel: "Rendah",
+                summary: "Siswa merasa kesulitan membagi waktu antara kegiatan OSIS dan tugas akademik.",
+                advice: "Berikan tips manajemen waktu dan prioritas skala.",
+                messages: [
+                    { role: 'model', parts: [{ text: "Halo, saya asisten BK virtual. Ada yang ingin diceritakan?" }] },
+                    { role: 'user', parts: [{ text: "Saya capek banget bagi waktu OSIS sama belajar." }] }
+                ]
+            }
+        ];
+
+        let currentUser = { name: '', class: '' };
+        let chatHistory = []; // Format Gemini: { role: 'user'|'model', parts: [{ text: '...' }] }
+        
+        // --- GEMINI API FUNCTIONS ---
+
+        async function callGeminiChat(history, newMessage) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_CHAT}:generateContent?key=${apiKey}`;
+            
+            // System instruction untuk persona bot
+            const systemPrompt = {
+                role: "user",
+                parts: [{ text: `
+                    Kamu adalah "Teman Cerita BK", asisten konseling virtual sekolah.
+                    Tugasmu: Mendengarkan curhat siswa dengan empati, validasi perasaan mereka, dan memberikan respon pendek (maksimal 3 kalimat) yang suportif.
+                    Gaya bahasa: Santai, hangat, bahasa Indonesia sehari-hari (boleh sedikit gaul tapi sopan), layaknya kakak kelas yang baik.
+                    PENTING:
+                    1. Kamu BUKAN psikolog. Jangan mendiagnosa.
+                    2. Jika siswa menyebutkan menyakiti diri sendiri, bunuh diri, atau kekerasan fisik parah, kamu HARUS merespon dengan sangat serius dan menyarankan mereka segera menemui Guru BK atau orang tua.
+                    3. Jangan berikan solusi teknis yang rumit, fokus pada mendengarkan.
+                `}]
+            };
+
+            // Membangun payload (history + new message)
+            // Kita sisipkan system prompt di awal (workaround untuk model yang belum support field systemInstruction di REST secara langsung di semua environment, atau kita jadikan pesan user pertama)
+            // Untuk simplicity di environment ini, kita gabung history.
+            
+            const contents = [systemPrompt, { role: "model", parts: [{ text: "Siap, saya mengerti. Saya akan menjadi pendengar yang baik." }] }, ...history, { role: "user", parts: [{ text: newMessage }] }];
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: contents })
+                });
+
+                if (!response.ok) throw new Error("API Error");
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("Gemini Error:", error);
+                return "Maaf, koneksi saya sedang gangguan. Tapi saya tetap mendengarkanmu. Boleh cerita lagi?";
+            }
+        }
+
+        async function callGeminiAnalysis(fullTranscript) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_CHAT}:generateContent?key=${apiKey}`;
+            
+            const prompt = `
+                Analisis transkrip chat konseling siswa berikut ini untuk Guru BK.
+                Transkrip:
+                ${fullTranscript}
+
+                Tugasmu:
+                1. Tentukan Tingkat Risiko: "Rendah" (curhat biasa), "Sedang" (stres/cemas terlihat), atau "Tinggi" (indikasi bullying/bunuh diri/bahaya fisik).
+                2. Buat Ringkasan (maks 1 kalimat).
+                3. Berikan Saran Singkat untuk Guru BK (apa yang harus dilakukan saat memanggil siswa ini).
+
+                Output WAJIB dalam format JSON murni:
+                {
+                    "riskLevel": "Rendah/Sedang/Tinggi",
+                    "summary": "...",
+                    "advice": "..."
+                }
+            `;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: [{ role: "user", parts: [{ text: prompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
+                return JSON.parse(text);
+            } catch (error) {
+                console.error("Analysis Error:", error);
+                return { riskLevel: "Sedang", summary: "Gagal menganalisis otomatis. Harap baca manual.", advice: "Cek manual." };
+            }
+        }
+
+        // --- APP LOGIC ---
+
+        const viewIds = ['view-landing', 'view-student-register', 'view-student-chat', 'view-student-summary', 'view-counselor-login', 'view-counselor-dashboard', 'view-counselor-detail'];
+
+        function navigateTo(targetId) {
+            viewIds.forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(`view-${targetId}`).classList.remove('hidden');
+            
+            const btnHome = document.getElementById('btn-home');
+            targetId === 'landing' ? btnHome.classList.add('hidden') : btnHome.classList.remove('hidden');
+
+            if (targetId === 'counselor-dashboard') renderDashboard();
+        }
+
+        function startChat(e) {
+            e.preventDefault();
+            const name = document.getElementById('input-name').value;
+            const className = document.getElementById('input-class').value;
+            if (name && className) {
+                currentUser = { name, class: className };
+                chatHistory = []; 
+                document.getElementById('chat-container').innerHTML = '';
+                
+                navigateTo('student-chat');
+                
+                // Pesan pembuka hardcoded agar instan
+                setTimeout(() => {
+                    addMessageUI('model', `Halo ${name}! 👋 Senang kenalan sama kamu. Aku di sini siap dengerin apa aja. Gimana perasaanmu hari ini?`);
+                    chatHistory.push({ role: 'model', parts: [{ text: `Halo ${name}! 👋 Senang kenalan sama kamu. Aku di sini siap dengerin apa aja. Gimana perasaanmu hari ini?` }] });
+                }, 500);
+            }
+        }
+
+        function addMessageUI(role, text) {
+            const container = document.getElementById('chat-container');
+            const isUser = role === 'user';
+            
+            // Gunakan marked untuk render markdown (bold, italic) dari AI
+            const parsedText = isUser ? text : marked.parse(text);
+
+            const div = document.createElement('div');
+            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 fade-in`;
+            div.innerHTML = `
+                <div class="max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3 shadow-sm text-sm leading-relaxed ${
+                    isUser 
+                    ? 'bg-teal-600 text-white rounded-br-none' 
+                    : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none prose prose-sm max-w-none'
+                }">
+                    ${isUser ? `<p>${text}</p>` : parsedText}
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('input-message');
+            const btn = document.getElementById('btn-send');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            // UI Updates
+            input.value = '';
+            input.style.height = 'auto'; // Reset height
+            btn.disabled = true;
+            addMessageUI('user', text);
+            document.getElementById('typing-indicator').classList.remove('hidden');
+            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+
+            // Logic
+            try {
+                const botReply = await callGeminiChat(chatHistory, text);
+                
+                // Update History
+                chatHistory.push({ role: 'user', parts: [{ text: text }] });
+                chatHistory.push({ role: 'model', parts: [{ text: botReply }] });
+
+                document.getElementById('typing-indicator').classList.add('hidden');
+                addMessageUI('model', botReply);
+            } catch (err) {
+                document.getElementById('typing-indicator').classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                // Focus kembali ke input di desktop
+                if(window.innerWidth > 768) document.getElementById('input-message').focus();
+            }
+        }
+
+        // Support Enter key to send (Shift+Enter for newline)
+        document.getElementById('input-message').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(e);
+            }
+        });
+
+        async function finishSession() {
+            if(!confirm("Kirim percakapan ini ke Guru BK?")) return;
+
+            // Show Loader
+            document.getElementById('global-loader').classList.remove('hidden');
+
+            // 1. Prepare Transcript text
+            const transcript = chatHistory.map(msg => 
+                `${msg.role === 'user' ? 'Siswa' : 'AI'}: ${msg.parts[0].text}`
+            ).join("\n");
+
+            // 2. Call Gemini for Analysis
+            const analysis = await callGeminiAnalysis(transcript);
+
+            // 3. Save Data
+            const newSession = {
+                id: Date.now(),
+                studentName: currentUser.name,
+                class: currentUser.class,
+                date: new Date().toLocaleString(),
+                riskLevel: analysis.riskLevel,
+                summary: analysis.summary,
+                advice: analysis.advice,
+                messages: [...chatHistory]
+            };
+            sessions.unshift(newSession);
+
+            // Hide Loader & Navigate
+            document.getElementById('global-loader').classList.add('hidden');
+            document.getElementById('summary-name').innerText = currentUser.name;
+            document.getElementById('user-feedback-summary').innerText = analysis.summary;
+            navigateTo('student-summary');
+        }
+
+        // --- COUNSELOR LOGIC ---
+
+        function handleLogin(e) {
+            e.preventDefault();
+            if (document.getElementById('input-password').value === 'admin123') {
+                navigateTo('counselor-dashboard');
+                document.getElementById('input-password').value = '';
+            } else {
+                alert("Password salah!");
+            }
+        }
+
+        function renderDashboard() {
+            const tbody = document.getElementById('dashboard-body');
+            document.getElementById('session-count').innerText = sessions.length;
+            tbody.innerHTML = '';
+
+            if (sessions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-400 italic">Belum ada sesi konseling masuk.</td></tr>`;
+                return;
+            }
+
+            sessions.forEach(session => {
+                let badgeClass = 'bg-green-100 text-green-700 border-green-200';
+                let icon = 'ph-check-circle';
+                if(session.riskLevel === 'Tinggi') { badgeClass = 'bg-red-100 text-red-700 border-red-200'; icon = 'ph-warning-circle'; }
+                else if(session.riskLevel === 'Sedang') { badgeClass = 'bg-yellow-100 text-yellow-800 border-yellow-200'; icon = 'ph-warning'; }
+
+                const row = `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-gray-900">${session.studentName}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${session.class}<br><span class="text-xs text-gray-400">${session.date}</span></td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                                <i class="ph-fill ${icon}"></i> ${session.riskLevel}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title="${session.summary}">
+                            ${session.summary}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="viewSessionDetail(${session.id})" class="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 p-2 rounded-lg transition">
+                                <i class="ph-bold ph-caret-right text-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        function viewSessionDetail(id) {
+            const session = sessions.find(s => s.id === id);
+            if (!session) return;
+
+            document.getElementById('detail-name').innerText = session.studentName;
+            document.getElementById('detail-info').innerText = `${session.class} • ${session.date}`;
+            
+            const badge = document.getElementById('detail-risk');
+            badge.innerText = session.riskLevel;
+            badge.className = `px-3 py-1 rounded-full text-xs font-bold border ${
+                session.riskLevel === 'Tinggi' ? 'bg-red-100 text-red-700 border-red-200' : 
+                session.riskLevel === 'Sedang' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
+                'bg-green-100 text-green-700 border-green-200'
+            }`;
+
+            // AI Analysis Section
+            document.getElementById('detail-summary').innerText = session.summary;
+            document.getElementById('detail-advice').innerText = session.advice || "Tidak ada saran spesifik.";
+
+            // Render Messages
+            const container = document.getElementById('detail-messages');
+            container.innerHTML = '';
+            
+            session.messages.forEach(msg => {
+                const isUser = msg.role === 'user';
+                const div = document.createElement('div');
+                div.className = `flex flex-col ${isUser ? 'items-end' : 'items-start'} mb-4`;
+                
+                const bubbleColor = isUser ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-800';
+                const senderName = isUser ? 'Siswa' : 'AI Assistant';
+                const text = msg.parts[0].text;
+                
+                div.innerHTML = `
+                    <span class="text-xs text-gray-400 mb-1 ml-1">${senderName}</span>
+                    <div class="max-w-[85%] px-4 py-3 rounded-2xl text-sm ${bubbleColor} ${isUser ? 'rounded-br-none' : 'rounded-bl-none'} shadow-sm">
+                        ${isUser ? text : marked.parse(text)}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            navigateTo('counselor-detail');
+        }
+    </script>
+</body>
+</html>
