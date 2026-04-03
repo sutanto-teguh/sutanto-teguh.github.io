@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViralGen Masterpiece V2.1 - Fix Input & Remove BG</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        display: ['Bebas Neue', 'cursive'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .color-wrapper input[type="color"] { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
+
+        #slide-content-container h1 {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 8;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .slide-input-card.active {
+            border-color: #6366f1;
+            background-color: white;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 h-screen w-full overflow-hidden font-sans">
+
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-200/40 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-rose-200/40 rounded-full blur-[120px]"></div>
+    </div>
+
+    <div class="w-full max-w-[1600px] h-screen grid grid-cols-1 lg:grid-cols-12 gap-0">
+
+        <!-- Sidebar Kontrol -->
+        <aside class="col-span-1 lg:col-span-4 bg-white border-r border-slate-200 flex flex-col overflow-hidden relative z-20 shadow-xl">
+            
+            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-md sticky top-0 z-10">
+                <h1 class="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                    <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-rose-500 flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </span>
+                    ViralGen <span class="text-indigo-500">V2.1</span>
+                </h1>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8 space-y-10" id="sidebar-scroll">
+                
+                <!-- Branding -->
+                <div class="space-y-5">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Identitas Brand</label>
+                    <div class="flex gap-4">
+                        <div class="relative w-16 h-16 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex-shrink-0 group cursor-pointer hover:border-indigo-400 transition-all">
+                            <img id="avatar-preview" src="" class="w-full h-full object-cover hidden">
+                            <div id="avatar-placeholder" class="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                <i class="fa-solid fa-camera text-xl"></i>
+                                <span class="text-[8px] mt-1 font-bold">FOTO</span>
+                            </div>
+                            <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="uploadAvatar(this)">
+                        </div>
+                        <div class="flex-1 space-y-2">
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">@</span>
+                                <input type="text" id="input-author" placeholder="username" 
+                                    class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl py-3 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <span class="text-[10px] text-slate-500 uppercase font-bold">Warna Utama</span>
+                            <div class="h-12 w-full bg-slate-50 border border-slate-200 rounded-xl relative flex items-center px-3 gap-3 hover:border-indigo-300 transition color-wrapper">
+                                <div id="preview-bg-dot" class="w-6 h-6 rounded-lg border border-white shadow-sm" style="background-color: #ffffff;"></div>
+                                <span id="bg-hex-text" class="text-xs font-mono text-slate-500">#FFFFFF</span>
+                                <input type="color" id="input-bg-color" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <span class="text-[10px] text-slate-500 uppercase font-bold">Warna Teks</span>
+                            <div class="h-12 w-full bg-slate-50 border border-slate-200 rounded-xl relative flex items-center px-3 gap-3 hover:border-indigo-300 transition color-wrapper">
+                                <div id="preview-text-dot" class="w-6 h-6 rounded-lg border border-white shadow-sm" style="background-color: #0f172a;"></div>
+                                <span id="text-hex-text" class="text-xs font-mono text-slate-500">#0F172A</span>
+                                <input type="color" id="input-text-color" value="#0f172a">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Konten & Import -->
+                <div class="space-y-5">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Konten Carousel</label>
+                        <div class="flex gap-2">
+                            <label class="cursor-pointer bg-amber-50 text-amber-600 hover:bg-amber-100 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-amber-200 transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-import"></i> IMPORT TXT
+                                <input type="file" id="import-txt" class="hidden" accept=".txt" onchange="handleImportTXT(this)">
+                            </label>
+                            <span id="slide-count-badge" class="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg border border-indigo-100">3 Slides</span>
+                        </div>
+                    </div>
+
+                    <div id="slides-inputs-container" class="space-y-4">
+                        <!-- Slide inputs generated here -->
+                    </div>
+
+                    <button onclick="addNewSlide()" class="w-full py-4 border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl text-sm font-semibold text-slate-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus-circle"></i> Tambah Slide Baru
+                    </button>
+                </div>
+
+                <!-- Tema -->
+                <div class="space-y-4 pb-10">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tema Tipografi</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="setTheme('modern')" data-theme="modern" class="theme-btn active group flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-indigo-500 bg-indigo-50 transition-all">
+                            <span class="text-[11px] font-black text-indigo-600">MODERN</span>
+                        </button>
+                        <button onclick="setTheme('elegant')" data-theme="elegant" class="theme-btn flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-slate-100 bg-white hover:border-slate-200 transition-all">
+                            <span class="text-[11px] font-black text-slate-400">ELEGANT</span>
+                        </button>
+                        <button onclick="setTheme('impact')" data-theme="impact" class="theme-btn flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-slate-100 bg-white hover:border-slate-200 transition-all">
+                            <span class="text-[11px] font-black text-slate-400">IMPACT</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8 border-t border-slate-100 bg-white/80 backdrop-blur-xl z-30">
+                <button onclick="downloadAllSlides()" class="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-indigo-600 hover:shadow-indigo-200 hover:-translate-y-1 transition-all flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-cloud-arrow-down text-lg"></i> 
+                    EKSPOR SEMUA SLIDE
+                </button>
+            </div>
+        </aside>
+
+        <!-- Preview Area -->
+        <main class="col-span-1 lg:col-span-8 relative flex flex-col items-center justify-center p-12 overflow-hidden bg-slate-50/50">
+            <div class="absolute top-10 flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-sm z-20">
+                <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                <span class="text-xs font-black text-slate-900 uppercase tracking-widest">Kanvas Live Editor</span>
+            </div>
+
+            <div class="relative z-10 group animate-slide-up">
+                <div id="capture-node" class="relative w-[500px] h-[500px] lg:w-[600px] lg:h-[600px] bg-white flex flex-col overflow-hidden shadow-2xl transition-all duration-300">
+                    <div id="preview-bg-layer" class="absolute inset-0 z-0"></div>
+                    <div class="absolute top-10 right-10 z-50" id="counter-badge">
+                        <div class="bg-black/10 backdrop-blur-lg border border-white/30 text-white font-black text-xs px-4 py-2 rounded-xl" id="slide-top-counter">1 / 3</div>
+                    </div>
+                    <div id="slide-content-container" class="absolute inset-0 z-20 flex flex-col"></div>
+                    <div id="footer-branding" class="absolute bottom-0 left-0 w-full z-50 h-28 px-12 lg:px-16 flex items-center justify-between">
+                        <div class="flex items-center gap-4 bg-white/20 backdrop-blur-md border border-white/40 pl-2 pr-5 py-2 rounded-full">
+                            <div id="footer-avatar-container" class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center border-2 border-white"></div>
+                            <span id="preview-author" class="font-black tracking-tight text-sm">@username</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-slate-500">
+                            <span class="text-[10px] font-black uppercase tracking-[0.2em]">Geser</span>
+                            <i class="fa-solid fa-arrow-right-long"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="prevSlide()" class="absolute top-1/2 -left-20 -translate-y-1/2 w-14 h-14 bg-white text-slate-900 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-xl z-50 border border-slate-100">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button onclick="nextSlide()" class="absolute top-1/2 -right-20 -translate-y-1/2 w-14 h-14 bg-white text-slate-900 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-xl z-50 border border-slate-100">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white/95 backdrop-blur-xl z-[100] hidden flex-col items-center justify-center">
+        <div class="w-24 h-24 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <h2 class="text-2xl font-black mt-6">Memproses...</h2>
+    </div>
+
+    <script>
+        const state = {
+            author: '@kreator_viral',
+            avatar: null,
+            bgColor: '#ffffff',
+            textColor: '#0f172a',
+            theme: 'modern',
+            currentIndex: 0,
+            slides: [
+                { title: "CARA MEMBUAT\nDESAIN VIRAL", image: null, isCTA: false },
+                { title: "1. Warna Cerah\nGunakan palet yang eyecatching agar orang berhenti scrolling.", image: null, isCTA: false },
+                { title: "Suka tips ini?\nSIMPAN SEKARANG!", image: null, isCTA: true }
+            ]
+        };
+
+        const els = {
+            authorInput: document.getElementById('input-author'),
+            bgInput: document.getElementById('input-bg-color'),
+            textInput: document.getElementById('input-text-color'),
+            slidesContainer: document.getElementById('slides-inputs-container'),
+            slideCountBadge: document.getElementById('slide-count-badge'),
+            avatarPreview: document.getElementById('avatar-preview'),
+            avatarPlaceholder: document.getElementById('avatar-placeholder'),
+            footerAvatarContainer: document.getElementById('footer-avatar-container'),
+            captureNode: document.getElementById('capture-node'),
+            bgLayer: document.getElementById('preview-bg-layer'),
+            contentContainer: document.getElementById('slide-content-container'),
+            previewAuthor: document.getElementById('preview-author'),
+            slideTopCounter: document.getElementById('slide-top-counter'),
+            counterBadge: document.getElementById('counter-badge'),
+            footerBranding: document.getElementById('footer-branding'),
+            loadingOverlay: document.getElementById('loading-overlay')
+        };
+
+        function init() {
+            els.authorInput.value = state.author.replace('@', '');
+            
+            els.authorInput.addEventListener('input', (e) => { 
+                state.author = e.target.value ? '@' + e.target.value : '@user'; 
+                renderPreview(); 
+            });
+            els.bgInput.addEventListener('input', (e) => { 
+                state.bgColor = e.target.value; 
+                document.getElementById('preview-bg-dot').style.backgroundColor = state.bgColor;
+                document.getElementById('bg-hex-text').innerText = state.bgColor.toUpperCase();
+                renderPreview(); 
+            });
+            els.textInput.addEventListener('input', (e) => { 
+                state.textColor = e.target.value; 
+                document.getElementById('preview-text-dot').style.backgroundColor = state.textColor;
+                document.getElementById('text-hex-text').innerText = state.textColor.toUpperCase();
+                renderPreview(); 
+            });
+
+            renderSlideInputs();
+            renderPreview();
+        }
+
+        function getDynamicFontSize(text, theme) {
+            const length = text.length;
+            let baseSize = 70; 
+            if (theme === 'impact') baseSize = 110;
+            if (theme === 'elegant') baseSize = 80;
+            if (length < 20) return baseSize;
+            if (length < 50) return baseSize * 0.8;
+            if (length < 100) return baseSize * 0.6;
+            return baseSize * 0.45;
+        }
+
+        function renderSlideInputs() {
+            els.slidesContainer.innerHTML = '';
+            state.slides.forEach((slide, index) => {
+                const isActive = index === state.currentIndex;
+                const div = document.createElement('div');
+                div.className = `slide-input-card group relative rounded-2xl p-5 border-2 transition-all duration-300 ${isActive ? 'active' : 'bg-slate-50 border-transparent'}`;
+                div.setAttribute('data-index', index);
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-indigo-600' : 'text-slate-400'}">Slide ${index + 1}</span>
+                        ${index > 0 ? `<button type="button" onclick="deleteSlide(${index})" class="text-slate-300 hover:text-rose-500 transition-colors"><i class="fa-solid fa-trash-can text-xs"></i></button>` : ''}
+                    </div>
+                    <textarea class="w-full bg-white border border-slate-100 text-slate-800 text-sm p-4 rounded-xl focus:outline-none focus:border-indigo-300 resize-none font-semibold placeholder-slate-300 mb-4" 
+                        rows="2" placeholder="Tulis konten slide...">${slide.title}</textarea>
+                    
+                    <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+                        <div class="flex items-center gap-3">
+                            <label class="cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-wide ${slide.image ? 'text-green-500' : 'text-slate-400 hover:text-indigo-500'}">
+                                <i class="fa-solid fa-image"></i> BG
+                                <input type="file" class="hidden" accept="image/*" onchange="uploadImage(${index}, this)">
+                            </label>
+                            ${slide.image ? `
+                                <button onclick="removeImage(${index})" class="text-rose-400 hover:text-rose-600 text-[10px] font-black uppercase flex items-center gap-1 transition-colors">
+                                    <i class="fa-solid fa-circle-xmark"></i> REMOVE
+                                </button>
+                            ` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="cta-${index}" class="peer hidden" onchange="toggleCTA(${index})" ${slide.isCTA ? 'checked' : ''}>
+                            <label for="cta-${index}" class="cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-400 peer-checked:text-indigo-600 select-none">
+                                <div class="w-4 h-4 border-2 border-slate-200 rounded flex items-center justify-center peer-checked:bg-indigo-600 peer-checked:border-indigo-600 transition-all">
+                                    <i class="fa-solid fa-check text-[10px] text-white opacity-0 peer-checked:opacity-100"></i>
+                                </div>
+                                CTA
+                            </label>
+                        </div>
+                    </div>
+                `;
+
+                const textarea = div.querySelector('textarea');
+                textarea.addEventListener('input', (e) => {
+                    state.slides[index].title = e.target.value;
+                    renderPreview();
+                });
+
+                div.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT' && !e.target.closest('button') && !e.target.closest('label')) {
+                        jumpToSlide(index);
+                    }
+                });
+
+                els.slidesContainer.appendChild(div);
+            });
+            els.slideCountBadge.innerText = `${state.slides.length} Slides`;
+        }
+
+        function jumpToSlide(index) {
+            state.currentIndex = index;
+            document.querySelectorAll('.slide-input-card').forEach((card, i) => {
+                if(i === index) card.classList.add('active');
+                else card.classList.remove('active');
+            });
+            renderPreview();
+        }
+
+        function toggleCTA(index) {
+            state.slides[index].isCTA = !state.slides[index].isCTA;
+            renderPreview();
+        }
+
+        function uploadAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    state.avatar = e.target.result;
+                    els.avatarPreview.src = state.avatar;
+                    els.avatarPreview.classList.remove('hidden');
+                    els.avatarPlaceholder.classList.add('hidden');
+                    renderPreview();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function uploadImage(index, input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => { 
+                    state.slides[index].image = e.target.result; 
+                    renderSlideInputs(); 
+                    renderPreview(); 
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // FUNGSI BARU: Menghapus background gambar pada slide tertentu
+        function removeImage(index) {
+            state.slides[index].image = null;
+            renderSlideInputs();
+            renderPreview();
+        }
+
+        function handleImportTXT(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    const parts = content.split(';').map(p => p.trim()).filter(p => p.length > 0);
+                    if (parts.length > 0) {
+                        state.slides = parts.map((text, idx) => ({
+                            title: text,
+                            image: null,
+                            isCTA: idx === parts.length - 1
+                        }));
+                        state.currentIndex = 0;
+                        renderSlideInputs();
+                        renderPreview();
+                    }
+                };
+                reader.readAsText(input.files[0]);
+            }
+        }
+
+        function addNewSlide() {
+            state.slides.push({ title: "Poin Baru", image: null, isCTA: false });
+            state.currentIndex = state.slides.length - 1;
+            renderSlideInputs();
+            renderPreview();
+        }
+
+        function deleteSlide(index) {
+            state.slides.splice(index, 1);
+            state.currentIndex = Math.min(state.currentIndex, state.slides.length - 1);
+            renderSlideInputs();
+            renderPreview();
+        }
+
+        function prevSlide() { if (state.currentIndex > 0) jumpToSlide(state.currentIndex - 1); }
+        function nextSlide() { if (state.currentIndex < state.slides.length - 1) jumpToSlide(state.currentIndex + 1); }
+
+        function setTheme(themeName) {
+            state.theme = themeName;
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                const isSelected = btn.dataset.theme === themeName;
+                btn.classList.toggle('border-indigo-500', isSelected);
+                btn.classList.toggle('bg-indigo-50', isSelected);
+            });
+            renderPreview();
+        }
+
+        function renderPreview() {
+            const slide = state.slides[state.currentIndex];
+            if(!slide) return;
+            
+            const textRaw = slide.title.replace(/\n/g, '<br/>');
+            const fontSize = getDynamicFontSize(slide.title, state.theme);
+            
+            els.previewAuthor.innerText = state.author;
+            els.slideTopCounter.innerText = `${state.currentIndex + 1} / ${state.slides.length}`;
+            
+            if(state.avatar) {
+                els.footerAvatarContainer.innerHTML = `<img src="${state.avatar}" class="w-full h-full object-cover">`;
+            } else {
+                els.footerAvatarContainer.innerHTML = `<i class="fa-solid fa-user text-slate-400"></i>`;
+            }
+
+            if (slide.image) {
+                els.bgLayer.innerHTML = `
+                    <img src="${slide.image}" class="absolute inset-0 w-full h-full object-cover z-0">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
+                `;
+                els.captureNode.style.color = '#ffffff'; 
+                els.previewAuthor.style.color = '#ffffff';
+            } else {
+                els.bgLayer.innerHTML = '';
+                els.captureNode.style.backgroundColor = state.bgColor;
+                els.captureNode.style.color = state.textColor;
+                els.previewAuthor.style.color = state.textColor;
+            }
+
+            if (slide.isCTA) {
+                els.counterBadge.style.opacity = '0';
+                els.footerBranding.style.opacity = '0';
+                els.contentContainer.className = "absolute inset-0 z-20 flex flex-col items-center justify-center p-12 text-center";
+                els.contentContainer.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
+                
+                const avatarHTML = state.avatar 
+                    ? `<img src="${state.avatar}" class="w-full h-full object-cover">`
+                    : `<i class="fa-solid fa-user text-5xl opacity-20"></i>`;
+
+                els.contentContainer.innerHTML = `
+                    <div class="relative w-40 h-40 rounded-[2.5rem] p-1.5 bg-gradient-to-br from-indigo-500 via-rose-500 to-amber-500 shadow-2xl mb-8 transform hover:rotate-3 transition-transform">
+                        <div class="w-full h-full rounded-[2.2rem] bg-white flex items-center justify-center overflow-hidden border-[6px] border-white">
+                            ${avatarHTML}
+                        </div>
+                    </div>
+                    <h2 class="text-3xl font-black mb-4 tracking-tight" style="color: inherit">${state.author}</h2>
+                    <p class="font-bold leading-tight max-w-sm mx-auto" style="color: inherit; font-size: ${fontSize * 0.5}px">${textRaw}</p>
+                    <div class="grid grid-cols-3 gap-10 mt-12">
+                        <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border-2 border-rose-500/20 flex items-center justify-center text-rose-500 text-2xl shadow-sm"><i class="fa-solid fa-heart"></i></div>
+                        <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border-2 border-indigo-500/20 flex items-center justify-center text-indigo-500 text-2xl shadow-sm"><i class="fa-solid fa-comment"></i></div>
+                        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border-2 border-amber-500/20 flex items-center justify-center text-amber-500 text-2xl shadow-sm"><i class="fa-solid fa-bookmark"></i></div>
+                    </div>
+                `;
+
+            } else {
+                els.counterBadge.style.opacity = '1';
+                els.footerBranding.style.opacity = '1';
+                els.contentContainer.className = "absolute inset-0 z-20 flex flex-col justify-end p-16 pb-36 text-left";
+
+                let fontStyle = state.theme === 'modern' ? 'font-black tracking-tighter leading-[0.9] uppercase' : 
+                                state.theme === 'elegant' ? 'font-bold italic leading-[1.1]' : 
+                                'font-normal tracking-wide leading-[0.85]';
+                
+                els.contentContainer.style.fontFamily = state.theme === 'modern' ? "'Plus Jakarta Sans', sans-serif" : 
+                                                       state.theme === 'elegant' ? "'Playfair Display', serif" : "'Bebas Neue', cursive";
+                
+                els.contentContainer.innerHTML = `<h1 class="${fontStyle}" style="font-size: ${fontSize}px">${textRaw}</h1>`;
+            }
+        }
+
+        async function downloadAllSlides() {
+            els.loadingOverlay.style.display = 'flex';
+            const originalIndex = state.currentIndex;
+            const node = els.captureNode;
+
+            try {
+                for (let i = 0; i < state.slides.length; i++) {
+                    state.currentIndex = i;
+                    renderPreview();
+                    await new Promise(r => setTimeout(r, 600)); 
+
+                    const canvas = await html2canvas(node, {
+                        scale: 2, 
+                        useCORS: true,
+                        allowTaint: true
+                    });
+
+                    const link = document.createElement('a');
+                    link.download = `Slide-${i + 1}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                state.currentIndex = originalIndex;
+                renderPreview();
+                els.loadingOverlay.style.display = 'none';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
