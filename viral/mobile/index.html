@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ViralGen V2.2 - Mobile Optimized</title>
+    <title>ViralGen V2.3 - Mobile Fixed</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,9 +28,8 @@
     </script>
 
     <style>
-        body { -webkit-tap-highlight-color: transparent; }
+        body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: contain; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         .color-wrapper input[type="color"] { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
@@ -41,14 +40,9 @@
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
         }
 
-        /* Mobile specific adjustments */
         @media (max-width: 1024px) {
-            .mobile-bottom-panel {
-                height: 45vh;
-            }
-            .preview-container {
-                height: 55vh;
-            }
+            .mobile-bottom-panel { height: 45vh; }
+            .preview-container { height: 55vh; }
         }
 
         #slide-content-container h1 {
@@ -60,142 +54,134 @@
             overflow: hidden;
         }
 
-        /* Fluid Canvas */
         #capture-node {
             aspect-ratio: 1 / 1;
             max-width: 100%;
             max-height: 100%;
+            touch-action: pan-y; /* Memungkinkan scroll vertikal tapi menjaga gesture horizontal */
         }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-800 h-screen w-full flex flex-col lg:flex-row overflow-hidden font-sans">
 
-    <!-- Latar Belakang Dekoratif -->
+    <!-- Dekorasi -->
     <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div class="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-[100px]"></div>
-        <div class="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-rose-100/50 rounded-full blur-[100px]"></div>
+        <div class="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-100/30 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-rose-100/30 rounded-full blur-[100px]"></div>
     </div>
 
-    <!-- HEADER (Hanya Mobile) -->
-    <header class="lg:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 px-5 py-3 flex justify-between items-center z-50">
-        <h1 class="text-lg font-black text-slate-900 flex items-center gap-2">
-            <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-rose-500 flex items-center justify-center text-white text-xs">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
+    <!-- HEADER (Mobile) -->
+    <header class="lg:hidden bg-white border-b border-slate-200 px-5 py-3 flex justify-between items-center z-50">
+        <h1 class="text-md font-black text-slate-900 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-[10px]">
+                <i class="fa-solid fa-bolt"></i>
             </span>
-            ViralGen <span class="text-indigo-500 text-xs">V2.2</span>
+            ViralGen <span class="text-indigo-500">2.3</span>
         </h1>
-        <button onclick="downloadAllSlides()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-200">
-            <i class="fa-solid fa-download"></i> EKSPOR
+        <button onclick="downloadAllSlides()" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest">
+            <i class="fa-solid fa-download mr-1"></i> Simpan
         </button>
     </header>
 
-    <!-- AREA PREVIEW (Bagian Atas di Mobile, Kanan di Desktop) -->
-    <main class="preview-container flex-1 relative flex flex-col items-center justify-center p-4 lg:p-12 overflow-hidden bg-slate-50/30 lg:order-2">
-        
-        <!-- Live Badge (Hidden on small mobile) -->
-        <div class="hidden sm:flex absolute top-6 items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm z-20">
-            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Live Editor</span>
-        </div>
-
-        <div class="relative w-full h-full flex items-center justify-center">
-            <!-- Container Slide yang Responsif -->
-            <div id="capture-node" class="relative bg-white flex flex-col overflow-hidden shadow-2xl transition-all duration-300 w-[85vw] sm:w-[500px] lg:w-[600px]">
+    <!-- PREVIEW AREA -->
+    <main class="preview-container flex-1 relative flex flex-col items-center justify-center p-4 lg:p-12 overflow-hidden bg-slate-50/50 lg:order-2">
+        <div class="relative w-full h-full flex items-center justify-center max-w-2xl mx-auto">
+            
+            <!-- Canvas Slide -->
+            <div id="capture-node" class="relative bg-white flex flex-col overflow-hidden shadow-2xl transition-all duration-300 w-full max-w-[85vw] sm:max-w-[500px]">
                 <div id="preview-bg-layer" class="absolute inset-0 z-0 pointer-events-none"></div>
                 
-                <div class="absolute top-4 right-4 sm:top-8 sm:right-8 z-50" id="counter-badge">
-                    <div class="bg-black/10 backdrop-blur-md border border-white/20 text-white font-black text-[10px] sm:text-xs px-3 py-1.5 rounded-lg" id="slide-top-counter">1 / 3</div>
+                <div class="absolute top-4 right-4 z-50" id="counter-badge">
+                    <div class="bg-black/20 backdrop-blur-md border border-white/20 text-white font-black text-[10px] px-3 py-1.5 rounded-lg" id="slide-top-counter">1 / 3</div>
                 </div>
 
-                <div id="slide-content-container" class="absolute inset-0 z-20 flex flex-col"></div>
+                <div id="slide-content-container" class="absolute inset-0 z-20 flex flex-col pointer-events-none"></div>
 
-                <div id="footer-branding" class="absolute bottom-0 left-0 w-full z-50 h-20 sm:h-28 px-6 sm:px-12 flex items-center justify-between">
+                <div id="footer-branding" class="absolute bottom-0 left-0 w-full z-50 h-20 sm:h-28 px-6 sm:px-12 flex items-center justify-between pointer-events-none">
                     <div class="flex items-center gap-2 sm:gap-4 bg-white/10 backdrop-blur-lg border border-white/30 pl-1.5 pr-4 py-1.5 rounded-full">
                         <div id="footer-avatar-container" class="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center border-2 border-white"></div>
                         <span id="preview-author" class="font-black tracking-tight text-[10px] sm:text-sm">@username</span>
                     </div>
-                    <div class="flex items-center gap-2 text-slate-500/50">
-                        <i class="fa-solid fa-arrow-right-long text-xs"></i>
-                    </div>
                 </div>
             </div>
 
-            <!-- Navigation Overlay -->
-            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none">
-                <button onclick="prevSlide()" class="pointer-events-auto w-10 h-10 sm:w-14 sm:h-14 bg-white/90 text-slate-900 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-lg border border-slate-100 backdrop-blur-sm">
-                    <i class="fa-solid fa-chevron-left text-xs sm:text-base"></i>
+            <!-- Tombol Navigasi yang Diperbaiki -->
+            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-0 sm:px-4 z-[60] pointer-events-none">
+                <button id="btn-prev" onclick="prevSlide()" class="pointer-events-auto w-12 h-12 bg-white/80 text-slate-900 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-xl border border-slate-100 ml-[-10px] sm:ml-0">
+                    <i class="fa-solid fa-chevron-left"></i>
                 </button>
-                <button onclick="nextSlide()" class="pointer-events-auto w-10 h-10 sm:w-14 sm:h-14 bg-white/90 text-slate-900 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-lg border border-slate-100 backdrop-blur-sm">
-                    <i class="fa-solid fa-chevron-right text-xs sm:text-base"></i>
+                <button id="btn-next" onclick="nextSlide()" class="pointer-events-auto w-12 h-12 bg-white/80 text-slate-900 rounded-full flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-xl border border-slate-100 mr-[-10px] sm:mr-0">
+                    <i class="fa-solid fa-chevron-right"></i>
                 </button>
             </div>
         </div>
+        <p class="lg:hidden text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-4">Geser slide untuk navigasi</p>
     </main>
 
-    <!-- PANEL KONTROL (Kiri di Desktop, Bawah di Mobile) -->
-    <aside class="mobile-bottom-panel lg:h-screen w-full lg:w-[450px] bg-white border-t lg:border-t-0 lg:border-r border-slate-200 flex flex-col overflow-hidden relative z-40 shadow-2xl lg:order-1">
+    <!-- CONTROL PANEL -->
+    <aside class="mobile-bottom-panel lg:h-screen w-full lg:w-[450px] bg-white border-t lg:border-t-0 lg:border-r border-slate-200 flex flex-col overflow-hidden relative z-40 lg:order-1">
         
-        <!-- Tab Navigation (Mobile Only) -->
-        <div class="lg:hidden flex border-b border-slate-100 bg-slate-50/50">
+        <!-- Tabs (Mobile) -->
+        <div class="lg:hidden flex border-b border-slate-100">
             <button onclick="switchTab('content')" id="tab-content" class="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-indigo-600 border-b-2 border-indigo-600">Konten</button>
             <button onclick="switchTab('style')" id="tab-style" class="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Branding</button>
         </div>
 
         <div class="flex-1 overflow-y-auto px-6 py-6 lg:p-8 space-y-8" id="sidebar-scroll">
             
-            <!-- SECTION: BRANDING -->
+            <!-- Branding Section -->
             <div id="section-style" class="hidden lg:block space-y-6">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identitas Brand</label>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Branding Utama</label>
                 <div class="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <div class="relative w-14 h-14 rounded-xl bg-white border-2 border-dashed border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
                         <img id="avatar-preview" src="" class="w-full h-full object-cover hidden">
-                        <i id="avatar-placeholder" class="fa-solid fa-camera text-slate-300"></i>
+                        <i id="avatar-placeholder" class="fa-solid fa-user text-slate-300"></i>
                         <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="uploadAvatar(this)">
                     </div>
-                    <div class="flex-1 space-y-2">
+                    <div class="flex-1">
                         <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">@</span>
                             <input type="text" id="input-author" placeholder="username" 
-                                class="w-full bg-white border border-slate-200 text-sm rounded-xl py-2.5 pl-8 pr-4 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all">
+                                class="w-full bg-white border border-slate-200 text-sm rounded-xl py-2.5 pl-8 pr-4 focus:border-indigo-500 outline-none">
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-2">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold">Warna BG</span>
+                        <span class="text-[9px] text-slate-400 uppercase font-black">Warna Latar</span>
                         <div class="h-11 w-full bg-slate-50 border border-slate-200 rounded-xl relative flex items-center px-3 gap-2 color-wrapper">
                             <div id="preview-bg-dot" class="w-5 h-5 rounded border border-white shadow-sm" style="background-color: #ffffff;"></div>
-                            <span id="bg-hex-text" class="text-[10px] font-mono text-slate-500">#FFFFFF</span>
+                            <span id="bg-hex-text" class="text-[10px] font-mono">#FFFFFF</span>
                             <input type="color" id="input-bg-color" value="#ffffff">
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold">Warna Teks</span>
+                        <span class="text-[9px] text-slate-400 uppercase font-black">Warna Teks</span>
                         <div class="h-11 w-full bg-slate-50 border border-slate-200 rounded-xl relative flex items-center px-3 gap-2 color-wrapper">
                             <div id="preview-text-dot" class="w-5 h-5 rounded border border-white shadow-sm" style="background-color: #0f172a;"></div>
-                            <span id="text-hex-text" class="text-[10px] font-mono text-slate-500">#0F172A</span>
+                            <span id="text-hex-text" class="text-[10px] font-mono">#0F172A</span>
                             <input type="color" id="input-text-color" value="#0f172a">
                         </div>
                     </div>
                 </div>
 
                 <div class="space-y-3">
-                    <span class="text-[10px] text-slate-400 uppercase font-bold">Tema Font</span>
+                    <span class="text-[9px] text-slate-400 uppercase font-black">Pilih Tipografi</span>
                     <div class="grid grid-cols-3 gap-2">
-                        <button onclick="setTheme('modern')" data-theme="modern" class="theme-btn active py-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-[10px] font-black text-indigo-600 transition-all">MODERN</button>
-                        <button onclick="setTheme('elegant')" data-theme="elegant" class="theme-btn py-3 rounded-xl border-2 border-slate-100 bg-white text-[10px] font-black text-slate-400 transition-all">ELEGANT</button>
-                        <button onclick="setTheme('impact')" data-theme="impact" class="theme-btn py-3 rounded-xl border-2 border-slate-100 bg-white text-[10px] font-black text-slate-400 transition-all">IMPACT</button>
+                        <button onclick="setTheme('modern')" data-theme="modern" class="theme-btn active py-3 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-[10px] font-black text-indigo-600">MODERN</button>
+                        <button onclick="setTheme('elegant')" data-theme="elegant" class="theme-btn py-3 rounded-xl border-2 border-slate-100 text-[10px] font-black text-slate-400">ELEGANT</button>
+                        <button onclick="setTheme('impact')" data-theme="impact" class="theme-btn py-3 rounded-xl border-2 border-slate-100 text-[10px] font-black text-slate-400">IMPACT</button>
                     </div>
                 </div>
             </div>
 
-            <!-- SECTION: CONTENT SLIDES -->
-            <div id="section-content" class="space-y-6">
+            <!-- Content Section -->
+            <div id="section-content" class="space-y-6 pb-20 lg:pb-0">
                 <div class="flex justify-between items-center">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Isi Slide</label>
-                    <label class="cursor-pointer bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-[9px] font-black border border-amber-200 uppercase tracking-tighter">
-                        <i class="fa-solid fa-file-import"></i> Import TXT
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Editor Slide</label>
+                    <label class="cursor-pointer bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-[9px] font-black border border-amber-200">
+                        <i class="fa-solid fa-file-import mr-1"></i> IMPORT TXT
                         <input type="file" id="import-txt" class="hidden" accept=".txt" onchange="handleImportTXT(this)">
                     </label>
                 </div>
@@ -204,24 +190,22 @@
                     <!-- Dinamis via JS -->
                 </div>
 
-                <button onclick="addNewSlide()" class="w-full py-4 border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl text-[11px] font-black text-slate-400 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all uppercase tracking-widest">
-                    <i class="fa-solid fa-plus-circle"></i> Tambah Slide
+                <button onclick="addNewSlide()" class="w-full py-4 border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl text-[10px] font-black text-slate-400 hover:text-indigo-600 transition-all uppercase">
+                    <i class="fa-solid fa-plus-circle mr-2"></i> Tambah Slide Baru
                 </button>
             </div>
         </div>
 
-        <!-- Footer Desktop Only -->
         <div class="hidden lg:block p-8 border-t border-slate-100 bg-white">
-            <button onclick="downloadAllSlides()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all flex items-center justify-center gap-3 tracking-widest text-xs uppercase">
-                <i class="fa-solid fa-cloud-arrow-down text-base"></i> Ekspor Semua Slide
+            <button onclick="downloadAllSlides()" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl shadow-xl hover:bg-indigo-600 transition-all text-xs uppercase tracking-[0.2em]">
+                Simpan Ke Galeri (PNG)
             </button>
         </div>
     </aside>
 
-    <!-- Overlay Loading -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-[100] hidden flex-col items-center justify-center">
-        <div class="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-xs font-black mt-4 uppercase tracking-[0.3em] text-slate-400">Menyimpan Gambar...</p>
+    <div id="loading-overlay" class="fixed inset-0 bg-white/95 backdrop-blur-md z-[100] hidden flex-col items-center justify-center">
+        <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-[10px] font-black mt-4 uppercase tracking-[0.3em] text-slate-600">Sedang Mengekspor...</p>
     </div>
 
     <script>
@@ -234,8 +218,8 @@
             currentIndex: 0,
             slides: [
                 { title: "CARA MEMBUAT\nDESAIN VIRAL", image: null, isCTA: false },
-                { title: "Gunakan ViralGen V2.2\nyang sekarang lebih cepat dan mobile friendly.", image: null, isCTA: false },
-                { title: "Suka tips ini?\nSIMPAN SEKARANG!", image: null, isCTA: true }
+                { title: "Gunakan ViralGen V2.3\nFixed Mobile Navigation & Image Upload.", image: null, isCTA: false },
+                { title: "Follow untuk tips\nmenarik lainnya!", image: null, isCTA: true }
             ]
         };
 
@@ -258,12 +242,14 @@
         function init() {
             els.authorInput.value = state.author.replace('@', '');
             els.authorInput.addEventListener('input', (e) => { state.author = '@' + (e.target.value || 'user'); renderPreview(); });
+            
             els.bgInput.addEventListener('input', (e) => { 
                 state.bgColor = e.target.value; 
                 document.getElementById('preview-bg-dot').style.backgroundColor = state.bgColor;
                 document.getElementById('bg-hex-text').innerText = state.bgColor.toUpperCase();
                 renderPreview(); 
             });
+
             els.textInput.addEventListener('input', (e) => { 
                 state.textColor = e.target.value; 
                 document.getElementById('preview-text-dot').style.backgroundColor = state.textColor;
@@ -271,30 +257,43 @@
                 renderPreview(); 
             });
 
+            initTouchGestures();
             renderSlideInputs();
             renderPreview();
+        }
+
+        // Swipe Gesture untuk Mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function initTouchGestures() {
+            const node = els.captureNode;
+            node.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+            node.addEventListener('touchend', e => { 
+                touchEndX = e.changedTouches[0].screenX; 
+                handleSwipe();
+            }, {passive: true});
+        }
+
+        function handleSwipe() {
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) nextSlide();
+            if (touchEndX > touchStartX + threshold) prevSlide();
         }
 
         function switchTab(tab) {
             const secContent = document.getElementById('section-content');
             const secStyle = document.getElementById('section-style');
-            const btnContent = document.getElementById('tab-content');
-            const btnStyle = document.getElementById('tab-style');
+            const btns = { content: document.getElementById('tab-content'), style: document.getElementById('tab-style') };
 
             if(tab === 'content') {
-                secContent.classList.remove('hidden');
-                secStyle.classList.add('hidden');
-                btnContent.classList.add('text-indigo-600', 'border-indigo-600');
-                btnContent.classList.remove('text-slate-400');
-                btnStyle.classList.add('text-slate-400');
-                btnStyle.classList.remove('text-indigo-600', 'border-indigo-600');
+                secContent.classList.remove('hidden'); secStyle.classList.add('hidden');
+                btns.content.className = "flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-indigo-600 border-b-2 border-indigo-600";
+                btns.style.className = "flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400";
             } else {
-                secContent.classList.add('hidden');
-                secStyle.classList.remove('hidden');
-                btnStyle.classList.add('text-indigo-600', 'border-indigo-600');
-                btnStyle.classList.remove('text-slate-400');
-                btnContent.classList.add('text-slate-400');
-                btnContent.classList.remove('text-indigo-600', 'border-indigo-600');
+                secContent.classList.add('hidden'); secStyle.classList.remove('hidden');
+                btns.style.className = "flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-indigo-600 border-b-2 border-indigo-600";
+                btns.content.className = "flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400";
             }
         }
 
@@ -309,19 +308,19 @@
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-indigo-600' : 'text-slate-400'}">Slide ${index + 1}</span>
                         <div class="flex items-center gap-3">
-                            ${index > 0 ? `<button onclick="deleteSlide(${index})" class="text-slate-300 hover:text-rose-500"><i class="fa-solid fa-trash-can text-xs"></i></button>` : ''}
+                            ${index > 0 ? `<button onclick="event.stopPropagation(); deleteSlide(${index})" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                         </div>
                     </div>
-                    <textarea class="w-full bg-white border border-slate-100 text-slate-800 text-sm p-3 rounded-xl focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none resize-none font-semibold mb-3" 
-                        rows="2" placeholder="Konten slide...">${slide.title}</textarea>
+                    <textarea class="w-full bg-white border border-slate-100 text-slate-800 text-sm p-3 rounded-xl focus:border-indigo-500 outline-none resize-none font-semibold mb-3" 
+                        rows="2">${slide.title}</textarea>
                     
                     <div class="flex items-center justify-between border-t border-slate-100 pt-3">
                         <div class="flex items-center gap-3">
                             <label class="cursor-pointer flex items-center gap-1.5 text-[9px] font-black uppercase ${slide.image ? 'text-green-500' : 'text-slate-400'}">
-                                <i class="fa-solid fa-image"></i> BG
+                                <i class="fa-solid fa-image"></i> ${slide.image ? 'Ganti BG' : 'Tambah BG'}
                                 <input type="file" class="hidden" accept="image/*" onchange="uploadImage(${index}, this)">
                             </label>
-                            ${slide.image ? `<button onclick="removeImage(${index})" class="text-rose-400 text-[9px] font-black uppercase"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                            ${slide.image ? `<button onclick="event.stopPropagation(); removeImage(${index})" class="text-rose-400 text-[9px] font-black uppercase"><i class="fa-solid fa-xmark"></i></button>` : ''}
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="cta-${index}" class="peer hidden" onchange="toggleCTA(${index})" ${slide.isCTA ? 'checked' : ''}>
@@ -353,6 +352,9 @@
             state.currentIndex = index;
             renderSlideInputs();
             renderPreview();
+            if (window.innerWidth < 1024) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         function uploadAvatar(input) {
@@ -393,10 +395,8 @@
         }
 
         function addNewSlide() {
-            state.slides.push({ title: "Poin Baru", image: null, isCTA: false });
-            state.currentIndex = state.slides.length - 1;
-            renderSlideInputs();
-            renderPreview();
+            state.slides.push({ title: "Konten Baru", image: null, isCTA: false });
+            jumpToSlide(state.slides.length - 1);
         }
 
         function deleteSlide(index) {
@@ -406,14 +406,20 @@
             renderPreview();
         }
 
-        function prevSlide() { if (state.currentIndex > 0) jumpToSlide(state.currentIndex - 1); }
-        function nextSlide() { if (state.currentIndex < state.slides.length - 1) jumpToSlide(state.currentIndex + 1); }
+        function prevSlide() { 
+            if (state.currentIndex > 0) jumpToSlide(state.currentIndex - 1); 
+            else jumpToSlide(state.slides.length - 1);
+        }
+        function nextSlide() { 
+            if (state.currentIndex < state.slides.length - 1) jumpToSlide(state.currentIndex + 1); 
+            else jumpToSlide(0);
+        }
 
         function setTheme(theme) {
             state.theme = theme;
             document.querySelectorAll('.theme-btn').forEach(btn => {
                 const active = btn.dataset.theme === theme;
-                btn.className = `theme-btn py-3 rounded-xl border-2 transition-all ${active ? 'active border-indigo-600 bg-indigo-50 text-indigo-600 font-black' : 'border-slate-100 bg-white text-slate-400 font-black'} text-[10px]`;
+                btn.className = `theme-btn py-3 rounded-xl border-2 transition-all ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-black' : 'border-slate-100 bg-white text-slate-400 font-black'} text-[10px]`;
             });
             renderPreview();
         }
@@ -426,9 +432,7 @@
                     const parts = content.split(';').map(p => p.trim()).filter(p => p.length > 0);
                     if (parts.length > 0) {
                         state.slides = parts.map((text, idx) => ({ title: text, image: null, isCTA: idx === parts.length - 1 }));
-                        state.currentIndex = 0;
-                        renderSlideInputs();
-                        renderPreview();
+                        jumpToSlide(0);
                     }
                 };
                 reader.readAsText(input.files[0]);
@@ -445,14 +449,14 @@
             
             if (length > 20) fontSize *= 0.8;
             if (length > 50) fontSize *= 0.65;
-            if (length > 100) fontSize *= 0.5;
+            if (length > 100) fontSize *= 0.45;
 
             els.previewAuthor.innerText = state.author;
             els.slideTopCounter.innerText = `${state.currentIndex + 1} / ${state.slides.length}`;
             els.footerAvatarContainer.innerHTML = state.avatar ? `<img src="${state.avatar}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-slate-300"></i>`;
 
             if (slide.image) {
-                els.bgLayer.innerHTML = `<img src="${slide.image}" class="absolute inset-0 w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>`;
+                els.bgLayer.innerHTML = `<img src="${slide.image}" class="absolute inset-0 w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>`;
                 els.captureNode.style.color = '#ffffff'; 
                 els.previewAuthor.style.color = '#ffffff';
             } else {
@@ -465,29 +469,29 @@
             if (slide.isCTA) {
                 document.getElementById('counter-badge').style.opacity = '0';
                 document.getElementById('footer-branding').style.opacity = '0';
-                els.contentContainer.className = "absolute inset-0 z-20 flex flex-col items-center justify-center p-10 text-center font-sans";
+                els.contentContainer.className = "absolute inset-0 z-20 flex flex-col items-center justify-center p-8 text-center";
                 els.contentContainer.innerHTML = `
-                    <div class="relative w-32 h-32 sm:w-44 sm:h-44 rounded-[2.5rem] p-1 bg-gradient-to-br from-indigo-500 to-rose-500 shadow-2xl mb-8">
-                        <div class="w-full h-full rounded-[2.3rem] bg-white flex items-center justify-center overflow-hidden border-[6px] border-white">
-                            ${state.avatar ? `<img src="${state.avatar}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-5xl opacity-10"></i>`}
+                    <div class="w-28 h-28 sm:w-40 sm:h-40 rounded-[2.5rem] p-1 bg-gradient-to-br from-indigo-500 to-rose-500 shadow-2xl mb-6">
+                        <div class="w-full h-full rounded-[2.3rem] bg-white flex items-center justify-center overflow-hidden border-[4px] border-white">
+                            ${state.avatar ? `<img src="${state.avatar}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-user text-4xl text-slate-200"></i>`}
                         </div>
                     </div>
-                    <h2 class="text-2xl font-black mb-3 tracking-tighter" style="color: inherit">${state.author}</h2>
-                    <p class="font-bold leading-tight max-w-[80%]" style="color: inherit; font-size: ${fontSize * 0.4}px">${textRaw}</p>
-                    <div class="flex gap-8 mt-10 opacity-30">
-                        <i class="fa-solid fa-heart text-2xl"></i>
-                        <i class="fa-solid fa-comment text-2xl"></i>
-                        <i class="fa-solid fa-bookmark text-2xl"></i>
+                    <h2 class="text-xl font-black mb-2 tracking-tighter" style="color: inherit">${state.author}</h2>
+                    <p class="font-bold leading-tight max-w-[90%]" style="color: inherit; font-size: ${fontSize * 0.35}px">${textRaw}</p>
+                    <div class="flex gap-6 mt-8 opacity-20">
+                        <i class="fa-solid fa-heart text-xl"></i>
+                        <i class="fa-solid fa-comment text-xl"></i>
+                        <i class="fa-solid fa-paper-plane text-xl"></i>
                     </div>
                 `;
             } else {
                 document.getElementById('counter-badge').style.opacity = '1';
                 document.getElementById('footer-branding').style.opacity = '1';
-                els.contentContainer.className = "absolute inset-0 z-20 flex flex-col justify-end p-10 sm:p-16 pb-28 sm:pb-40 text-left";
+                els.contentContainer.className = "absolute inset-0 z-20 flex flex-col justify-end p-8 sm:p-14 pb-24 sm:pb-36 text-left";
                 
-                let fontClass = state.theme === 'modern' ? 'font-black tracking-tighter leading-[0.9] uppercase font-sans' : 
+                let fontClass = state.theme === 'modern' ? 'font-black tracking-tighter leading-[0.95] uppercase font-sans' : 
                                  state.theme === 'elegant' ? 'font-bold italic leading-[1.1] font-serif' : 
-                                 'font-normal tracking-wide leading-[0.8] font-display';
+                                 'font-normal tracking-wide leading-[0.8] font-display uppercase';
                 
                 els.contentContainer.innerHTML = `<h1 class="${fontClass}" style="font-size: ${fontSize}px">${textRaw}</h1>`;
             }
@@ -503,9 +507,10 @@
                     await new Promise(r => setTimeout(r, 600)); 
                     const canvas = await html2canvas(els.captureNode, { scale: 2, useCORS: true, allowTaint: true });
                     const link = document.createElement('a');
-                    link.download = `Slide-${i + 1}.png`;
+                    link.download = `ViralGen-${i + 1}.png`;
                     link.href = canvas.toDataURL('image/png');
                     link.click();
+                    await new Promise(r => setTimeout(r, 100)); 
                 }
             } catch (err) { console.error(err); } 
             finally {
@@ -515,7 +520,7 @@
             }
         }
 
-        init();
+        window.onload = init;
     </script>
 </body>
 </html>
