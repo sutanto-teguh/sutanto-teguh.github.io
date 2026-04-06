@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Progress Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .progress-ring { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
+        
+        /* Modal Transition */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.3s ease-out; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: all 0.2s ease-in; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-900" x-data="quranApp()" x-init="init()" x-cloak>
+
+    <!-- Header -->
+    <header class="bg-emerald-600 text-white shadow-lg pb-24 pt-8">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Quran Progress</h1>
+                <p class="text-emerald-100 text-sm">Lacak hafalan dan bacaan harianmu</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- Tombol Buka Riwayat -->
+                <button @click="showHistory = true" class="bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-sm font-semibold hidden md:block">Riwayat</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 -mt-16">
+        <!-- Dashboard Statistik -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center space-x-4">
+                <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                    <span class="text-2xl font-bold" x-text="completedSurahs"></span>
+                </div>
+                <div>
+                    <p class="text-slate-500 text-xs uppercase tracking-wider font-semibold">Surah Selesai</p>
+                    <p class="text-slate-800 text-lg font-bold" x-text="completedSurahs === 114 ? 'Khatam! 🎉' : 'Target Hafalan'"></p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center space-x-4">
+                <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                    <span class="text-2xl font-bold" x-text="totalAyatsDone"></span>
+                </div>
+                <div>
+                    <p class="text-slate-500 text-xs uppercase tracking-wider font-semibold">Total Ayat</p>
+                    <p class="text-slate-800 text-lg font-bold">Berhasil Dihafal</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-slate-500 text-xs uppercase tracking-wider font-semibold">Total Progress</p>
+                    <span class="text-emerald-600 font-bold" x-text="Math.round(overallProgress) + '%'"></span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div class="bg-emerald-500 h-2.5 rounded-full shadow-sm transition-all duration-700 ease-in-out" 
+                         :style="`width: ${overallProgress}%`" 
+                         class="shadow-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kontrol -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+            <div class="relative w-full md:w-96">
+                <input type="text" x-model="searchQuery" placeholder="Cari surah (misal: Al-Baqarah)..." 
+                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm transition-all">
+                <svg class="w-5 h-5 absolute left-3 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <div class="flex space-x-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600'" class="px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition whitespace-nowrap border border-slate-100">Semua</button>
+                <button @click="filter = 'ongoing'" :class="filter === 'ongoing' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600'" class="px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition whitespace-nowrap border border-slate-100">Sedang Dihafal</button>
+                <button @click="filter = 'completed'" :class="filter === 'completed' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600'" class="px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition whitespace-nowrap border border-slate-100">Selesai</button>
+                <button @click="resetData()" class="px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition shadow-sm">Reset Semua</button>
+            </div>
+        </div>
+
+        <!-- Grid Surah -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-12">
+            <template x-for="surah in filteredSurahs" :key="surah.id">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-lg text-slate-700 font-bold text-sm" x-text="surah.id"></div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 leading-tight" x-text="surah.name"></h3>
+                                <p class="text-xs text-slate-500 italic" x-text="surah.translation"></p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-emerald-600 font-bold text-[10px]" x-text="surah.type"></span>
+                            <span class="block text-slate-400 text-[10px]" x-text="surah.totalAyats + ' Ayat'"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-6">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Progres Ayat</span>
+                            <div class="flex items-center space-x-2">
+                                <button @click="updateProgress(surah.id, -1)" class="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-red-500 transition active:scale-95">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                </button>
+                                <span class="text-lg font-bold w-12 text-center text-slate-700" x-text="surah.completedAyats"></span>
+                                <button @click="updateProgress(surah.id, 1)" class="p-1.5 rounded-md hover:bg-emerald-100 text-slate-400 hover:text-emerald-600 transition active:scale-95">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="relative flex items-center justify-center w-12 h-12">
+                            <svg class="w-12 h-12">
+                                <circle class="text-slate-100" stroke-width="3" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24" />
+                                <circle class="text-emerald-500 progress-ring" stroke-width="3" 
+                                        :stroke-dasharray="125.6" 
+                                        :stroke-dashoffset="125.6 - (125.6 * (surah.completedAyats / surah.totalAyats))" 
+                                        stroke-linecap="round" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24" />
+                            </svg>
+                            <span class="absolute text-[10px] font-bold text-slate-600" x-text="Math.round((surah.completedAyats / surah.totalAyats) * 100) + '%'"></span>
+                        </div>
+                    </div>
+                    
+                    <button x-show="surah.completedAyats < surah.totalAyats" @click="finishSurah(surah.id)"
+                            class="w-full mt-4 py-2 bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 rounded-lg text-xs font-semibold transition border border-dashed border-slate-200">
+                        Selesaikan Surah
+                    </button>
+                    <div x-show="surah.completedAyats == surah.totalAyats" class="w-full mt-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold text-center border border-emerald-100">
+                        Tuntas ✨
+                    </div>
+                </div>
+            </template>
+        </div>
+    </main>
+
+    <!-- MODAL RIWAYAT (Pop-up Dialog) -->
+    <div x-show="showHistory" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <!-- Overlay -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showHistory = false"></div>
+
+        <!-- Konten Modal -->
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative"
+                 x-show="showHistory"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="scale-95 translate-y-4"
+                 x-transition:enter-end="scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="scale-100 translate-y-0"
+                 x-transition:leave-end="scale-95 translate-y-4">
+                
+                <!-- Header Modal -->
+                <div class="bg-emerald-600 px-6 py-4 flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h2 class="text-white font-bold tracking-wide">Riwayat Aktivitas</h2>
+                    </div>
+                    <button @click="showHistory = false" class="text-emerald-100 hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- List Log -->
+                <div class="p-6 max-h-[60vh] overflow-y-auto bg-white">
+                    <template x-for="(log, index) in logs" :key="log.id">
+                        <div class="flex items-start space-x-4 mb-6 last:mb-0 relative">
+                            <!-- Garis Timeline -->
+                            <div x-show="index !== logs.length - 1" class="absolute left-4 top-10 bottom-0 w-0.5 bg-slate-100 -ml-[1px]"></div>
+                            
+                            <!-- Ikon -->
+                            <div :class="log.type === 'finish' ? 'bg-emerald-500' : (log.type === 'add' ? 'bg-blue-500' : 'bg-red-400')" 
+                                 class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 z-10 shadow-sm">
+                                <svg x-show="log.type === 'finish'" class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                                <svg x-show="log.type === 'add'" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                <svg x-show="log.type === 'remove'" class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                            </div>
+                            
+                            <!-- Konten -->
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="text-xs font-bold text-slate-800" x-text="log.message.split(' ')[0] + ' ' + log.message.split(' ')[1]"></h4>
+                                    <span class="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full" x-text="log.timestamp"></span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-1" x-text="log.message"></p>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Empty State -->
+                    <div x-show="logs.length === 0" class="text-center py-12">
+                        <div class="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <p class="text-sm text-slate-400 italic">Belum ada catatan aktivitas.</p>
+                    </div>
+                </div>
+
+                <!-- Footer Modal -->
+                <div class="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center">
+                    <p class="text-[10px] text-slate-400 font-medium">Mencatat 50 aktivitas terakhir secara lokal</p>
+                    <button @click="clearLogs()" x-show="logs.length > 0" class="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-tight">Hapus Semua</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-200 py-8">
+        <div class="container mx-auto px-4 text-center text-slate-400 text-[11px]">
+            <p>© 2026 Quran Progress Tracker - By. Alima Ladang Berkah • Data tersimpan di browser perangkat ini</p>
+        </div>
+    </footer>
+
+    <script>
+        function quranApp() {
+            return {
+                searchQuery: '',
+                filter: 'all',
+                showHistory: false, // State untuk modal
+                surahs: [],
+                logs: [],
+                
+                init() {
+                    const data = [
+                        {id: 1, name: "Al-Fatihah", translation: "Pembukaan", totalAyats: 7, type: "Makkiyah"},
+                        {id: 2, name: "Al-Baqarah", translation: "Sapi Betina", totalAyats: 286, type: "Madaniyah"},
+                        {id: 3, name: "Ali 'Imran", translation: "Keluarga Imran", totalAyats: 200, type: "Madaniyah"},
+                        {id: 4, name: "An-Nisa'", translation: "Wanita", totalAyats: 176, type: "Madaniyah"},
+                        {id: 5, name: "Al-Ma'idah", translation: "Jamuan", totalAyats: 120, type: "Madaniyah"},
+                        {id: 6, name: "Al-An'am", translation: "Hewan Ternak", totalAyats: 165, type: "Makkiyah"},
+                        {id: 7, name: "Al-A'rf", translation: "Tempat yang Tertinggi", totalAyats: 206, type: "Makkiyah"},
+                        {id: 8, name: "Al-Anfal", translation: "Harta Rampasan Perang", totalAyats: 75, type: "Madaniyah"},
+                        {id: 9, name: "At-Tawbah", translation: "Pengampunan", totalAyats: 129, type: "Madaniyah"},
+                        {id: 10, name: "Yunus", translation: "Nabi Yunus", totalAyats: 109, type: "Makkiyah"},
+                        {id: 11, name: "Hud", translation: "Nabi Hud", totalAyats: 123, type: "Makkiyah"},
+                        {id: 12, name: "Yusuf", translation: "Nabi Yusuf", totalAyats: 111, type: "Makkiyah"},
+                        {id: 13, name: "Ar-Ra'd", translation: "Guruh", totalAyats: 43, type: "Madaniyah"},
+                        {id: 14, name: "Ibrahim", translation: "Nabi Ibrahim", totalAyats: 52, type: "Makkiyah"},
+                        {id: 15, name: "Al-Hijr", translation: "Gunung Al-Hijr", totalAyats: 99, type: "Makkiyah"},
+                        {id: 16, name: "An-Nahl", translation: "Lebah", totalAyats: 128, type: "Makkiyah"},
+                        {id: 17, name: "Al-Isra'", translation: "Perjalanan Malam", totalAyats: 111, type: "Makkiyah"},
+                        {id: 18, name: "Al-Kahf", translation: "Penghuni Gua", totalAyats: 110, type: "Makkiyah"},
+                        {id: 19, name: "Maryam", translation: "Siti Maryam", totalAyats: 98, type: "Makkiyah"},
+                        {id: 20, name: "Ta Ha", translation: "Ta Ha", totalAyats: 135, type: "Makkiyah"},
+                        {id: 21, name: "Al-Anbiya'", translation: "Para Nabi", totalAyats: 112, type: "Makkiyah"},
+                        {id: 22, name: "Al-Hajj", translation: "Haji", totalAyats: 78, type: "Madaniyah"},
+                        {id: 23, name: "Al-Mu'minun", translation: "Orang-orang Mukmin", totalAyats: 118, type: "Makkiyah"},
+                        {id: 24, name: "An-Nur", translation: "Cahaya", totalAyats: 64, type: "Madaniyah"},
+                        {id: 25, name: "Al-Furqan", translation: "Pembeda", totalAyats: 77, type: "Makkiyah"},
+                        {id: 26, name: "Asy-Syu'ara'", translation: "Para Penyair", totalAyats: 227, type: "Makkiyah"},
+                        {id: 27, name: "An-Naml", translation: "Semut", totalAyats: 93, type: "Makkiyah"},
+                        {id: 28, name: "Al-Qasas", translation: "Kisah-kisah", totalAyats: 88, type: "Makkiyah"},
+                        {id: 29, name: "Al-'Ankabut", translation: "Laba-laba", totalAyats: 69, type: "Makkiyah"},
+                        {id: 30, name: "Ar-Rum", translation: "Bangsa Romawi", totalAyats: 60, type: "Makkiyah"},
+                        {id: 31, name: "Luqman", translation: "Luqman Hakim", totalAyats: 34, type: "Makkiyah"},
+                        {id: 32, name: "As-Sajdah", translation: "Sajdah", totalAyats: 30, type: "Makkiyah"},
+                        {id: 33, name: "Al-Ahzab", translation: "Golongan yang Bersekutu", totalAyats: 73, type: "Madaniyah"},
+                        {id: 34, name: "Saba'", translation: "Kaum Saba'", totalAyats: 54, type: "Makkiyah"},
+                        {id: 35, name: "Fatir", translation: "Pencipta", totalAyats: 45, type: "Makkiyah"},
+                        {id: 36, name: "Ya Sin", translation: "Ya Sin", totalAyats: 83, type: "Makkiyah"},
+                        {id: 37, name: "As-Saffat", translation: "Barisan-barisan", totalAyats: 182, type: "Makkiyah"},
+                        {id: 38, name: "Sad", translation: "Sad", totalAyats: 88, type: "Makkiyah"},
+                        {id: 39, name: "Az-Zumar", translation: "Rombongan-rombongan", totalAyats: 75, type: "Makkiyah"},
+                        {id: 40, name: "Ghafir", translation: "Yang Mengampuni", totalAyats: 85, type: "Makkiyah"},
+                        {id: 41, name: "Fussilat", translation: "Yang Dijelaskan", totalAyats: 54, type: "Makkiyah"},
+                        {id: 42, name: "Asy-Syura", translation: "Musyawarah", totalAyats: 53, type: "Makkiyah"},
+                        {id: 43, name: "Az-Zukhruf", translation: "Perhiasan", totalAyats: 89, type: "Makkiyah"},
+                        {id: 44, name: "Ad-Dukhan", translation: "Kabut", totalAyats: 59, type: "Makkiyah"},
+                        {id: 45, name: "Al-Jasiyah", translation: "Yang Bertekuk Lutut", totalAyats: 37, type: "Makkiyah"},
+                        {id: 46, name: "Al-Ahqaf", translation: "Bukit-bukit Pasir", totalAyats: 35, type: "Makkiyah"},
+                        {id: 47, name: "Muhammad", translation: "Nabi Muhammad", totalAyats: 38, type: "Madaniyah"},
+                        {id: 48, name: "Al-Fath", translation: "Kemenangan", totalAyats: 29, type: "Madaniyah"},
+                        {id: 49, name: "Al-Hujurat", translation: "Kamar-kamar", totalAyats: 18, type: "Madaniyah"},
+                        {id: 50, name: "Qaf", translation: "Qaf", totalAyats: 45, type: "Makkiyah"},
+                        {id: 51, name: "Ad-Zariyat", translation: "Angin yang Menerbangkan", totalAyats: 60, type: "Makkiyah"},
+                        {id: 52, name: "At-Tur", translation: "Bukit Tur", totalAyats: 49, type: "Makkiyah"},
+                        {id: 53, name: "An-Najm", translation: "Bintang", totalAyats: 62, type: "Makkiyah"},
+                        {id: 54, name: "Al-Qamar", translation: "Bulan", totalAyats: 55, type: "Makkiyah"},
+                        {id: 55, name: "Ar-Rahman", translation: "Yang Maha Pemurah", totalAyats: 78, type: "Madaniyah"},
+                        {id: 56, name: "Al-Waqi'ah", translation: "Hari Kiamat", totalAyats: 96, type: "Makkiyah"},
+                        {id: 57, name: "Al-Hadid", translation: "Besi", totalAyats: 29, type: "Madaniyah"},
+                        {id: 58, name: "Al-Mujadilah", translation: "Wanita yang Mengajukan Gugatan", totalAyats: 22, type: "Madaniyah"},
+                        {id: 59, name: "Al-Hasyr", translation: "Pengusiran", totalAyats: 24, type: "Madaniyah"},
+                        {id: 60, name: "Al-Mumtahanah", translation: "Wanita yang Diuji", totalAyats: 13, type: "Madaniyah"},
+                        {id: 61, name: "As-Saff", translation: "Barisan", totalAyats: 14, type: "Madaniyah"},
+                        {id: 62, name: "Al-Jumu'ah", translation: "Hari Jumat", totalAyats: 11, type: "Madaniyah"},
+                        {id: 63, name: "Al-Munafiqun", translation: "Orang-orang Munafik", totalAyats: 11, type: "Madaniyah"},
+                        {id: 64, name: "At-Taghabun", translation: "Hari Dinampakkan Kesalahan", totalAyats: 18, type: "Madaniyah"},
+                        {id: 65, name: "At-Talaq", translation: "Talak", totalAyats: 12, type: "Madaniyah"},
+                        {id: 66, name: "At-Tahrim", translation: "Mengharamkan", totalAyats: 12, type: "Madaniyah"},
+                        {id: 67, name: "Al-Mulk", translation: "Kerajaan", totalAyats: 30, type: "Makkiyah"},
+                        {id: 68, name: "Al-Qalam", translation: "Pena", totalAyats: 52, type: "Makkiyah"},
+                        {id: 69, name: "Al-Haqqah", translation: "Hari Kiamat", totalAyats: 52, type: "Makkiyah"},
+                        {id: 70, name: "Al-Ma'arij", translation: "Tempat Naik", totalAyats: 44, type: "Makkiyah"},
+                        {id: 71, name: "Nuh", translation: "Nabi Nuh", totalAyats: 28, type: "Makkiyah"},
+                        {id: 72, name: "Al-Jinn", translation: "Jin", totalAyats: 28, type: "Makkiyah"},
+                        {id: 73, name: "Al-Muzzammil", translation: "Orang yang Berselimut", totalAyats: 20, type: "Makkiyah"},
+                        {id: 74, name: "Al-Muddassir", translation: "Orang yang Berkemul", totalAyats: 56, type: "Makkiyah"},
+                        {id: 75, name: "Al-Qiyamah", translation: "Hari Kiamat", totalAyats: 40, type: "Makkiyah"},
+                        {id: 76, name: "Al-Insan", translation: "Manusia", totalAyats: 31, type: "Madaniyah"},
+                        {id: 77, name: "Al-Mursalat", translation: "Malaikat yang Diutus", totalAyats: 50, type: "Makkiyah"},
+                        {id: 78, name: "An-Naba'", translation: "Berita Besar", totalAyats: 40, type: "Makkiyah"},
+                        {id: 79, name: "An-Nazi'at", translation: "Malaikat Pencabut Nyawa", totalAyats: 46, type: "Makkiyah"},
+                        {id: 80, name: "'Abasa", translation: "Bermuka Masam", totalAyats: 42, type: "Makkiyah"},
+                        {id: 81, name: "At-Takwir", translation: "Menggulung", totalAyats: 29, type: "Makkiyah"},
+                        {id: 82, name: "Al-Infitar", translation: "Terbelah", totalAyats: 19, type: "Makkiyah"},
+                        {id: 83, name: "Al-Mutaffifin", translation: "Orang yang Curang", totalAyats: 36, type: "Makkiyah"},
+                        {id: 84, name: "Al-Insyiqaq", translation: "Terbelah", totalAyats: 25, type: "Makkiyah"},
+                        {id: 85, name: "Al-Buruj", translation: "Gugusan Bintang", totalAyats: 22, type: "Makkiyah"},
+                        {id: 86, name: "At-Tariq", translation: "Yang Datang Malam Hari", totalAyats: 17, type: "Makkiyah"},
+                        {id: 87, name: "Al-A'la", translation: "Yang Maha Tinggi", totalAyats: 19, type: "Makkiyah"},
+                        {id: 88, name: "Al-Ghasyiyah", translation: "Hari Pembalasan", totalAyats: 26, type: "Makkiyah"},
+                        {id: 89, name: "Al-Fajr", translation: "Fajar", totalAyats: 30, type: "Makkiyah"},
+                        {id: 90, name: "Al-Balad", translation: "Negeri", totalAyats: 20, type: "Makkiyah"},
+                        {id: 91, name: "Asy-Syams", translation: "Matahari", totalAyats: 15, type: "Makkiyah"},
+                        {id: 92, name: "Al-Layl", translation: "Malam", totalAyats: 21, type: "Makkiyah"},
+                        {id: 93, name: "Ad-Duha", translation: "Waktu Dhuha", totalAyats: 11, type: "Makkiyah"},
+                        {id: 94, name: "Al-Insyirah", translation: "Kelapangan", totalAyats: 8, type: "Makkiyah"},
+                        {id: 95, name: "At-Tin", translation: "Buah Tin", totalAyats: 8, type: "Makkiyah"},
+                        {id: 96, name: "Al-'Alaq", translation: "Segumpal Darah", totalAyats: 19, type: "Makkiyah"},
+                        {id: 97, name: "Al-Qadr", translation: "Kemuliaan", totalAyats: 5, type: "Makkiyah"},
+                        {id: 98, name: "Al-Bayyinah", translation: "Bukti Nyata", totalAyats: 8, type: "Madaniyah"},
+                        {id: 99, name: "Az-Zalzalah", translation: "Kegoncangan", totalAyats: 8, type: "Madaniyah"},
+                        {id: 100, name: "Al-'Adiyat", translation: "Kuda Perang Berlari Kencang", totalAyats: 11, type: "Makkiyah"},
+                        {id: 101, name: "Al-Qari'ah", translation: "Hari Kiamat", totalAyats: 11, type: "Makkiyah"},
+                        {id: 102, name: "At-Takasur", translation: "Bermegah-megahan", totalAyats: 8, type: "Makkiyah"},
+                        {id: 103, name: "Al-'Asr", translation: "Masa", totalAyats: 3, type: "Makkiyah"},
+                        {id: 104, name: "Al-Humazah", translation: "Pengumpat", totalAyats: 9, type: "Makkiyah"},
+                        {id: 105, name: "Al-Fil", translation: "Gajah", totalAyats: 5, type: "Makkiyah"},
+                        {id: 106, name: "Quraisy", translation: "Suku Quraisy", totalAyats: 4, type: "Makkiyah"},
+                        {id: 107, name: "Al-Ma'un", translation: "Barang Berguna", totalAyats: 7, type: "Makkiyah"},
+                        {id: 108, name: "Al-Kausar", translation: "Nikmat Melimpah", totalAyats: 3, type: "Makkiyah"},
+                        {id: 109, name: "Al-Kafirun", translation: "Orang Kafir", totalAyats: 6, type: "Makkiyah"},
+                        {id: 110, name: "An-Nasr", translation: "Pertolongan", totalAyats: 3, type: "Madaniyah"},
+                        {id: 111, name: "Al-Lahab", translation: "Gejolak Api", totalAyats: 5, type: "Makkiyah"},
+                        {id: 112, name: "Al-Ikhlas", translation: "Ikhlas", totalAyats: 4, type: "Makkiyah"},
+                        {id: 113, name: "Al-Falaq", translation: "Waktu Subuh", totalAyats: 5, type: "Makkiyah"},
+                        {id: 114, name: "An-Nas", translation: "Manusia", totalAyats: 6, type: "Makkiyah"}
+                    ];
+
+                    const savedProgress = localStorage.getItem('quran_progress_data');
+                    const savedLogs = localStorage.getItem('quran_activity_logs');
+                    
+                    if (savedProgress) {
+                        this.surahs = JSON.parse(savedProgress);
+                    } else {
+                        this.surahs = data.map(s => ({...s, completedAyats: 0}));
+                        this.save();
+                    }
+
+                    if (savedLogs) {
+                        this.logs = JSON.parse(savedLogs);
+                    }
+                },
+
+                save() {
+                    localStorage.setItem('quran_progress_data', JSON.stringify(this.surahs));
+                },
+
+                saveLogs() {
+                    localStorage.setItem('quran_activity_logs', JSON.stringify(this.logs));
+                },
+
+                addLog(type, surahName, currentAyat, totalAyat) {
+                    const now = new Date();
+                    const timestamp = now.toLocaleDateString('id-ID', { 
+                        day: '2-digit', 
+                        month: 'short', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    
+                    let message = "";
+                    if (type === 'add') message = `Menambah hafalan ${surahName} ke ayat ${currentAyat}`;
+                    else if (type === 'remove') message = `Mengurangi hafalan ${surahName} ke ayat ${currentAyat}`;
+                    else if (type === 'finish') message = `Menyelesaikan Surah ${surahName} (${totalAyat} Ayat)`;
+
+                    const newLog = {
+                        id: Date.now(),
+                        type: type,
+                        message: message,
+                        timestamp: timestamp
+                    };
+
+                    this.logs.unshift(newLog);
+                    if (this.logs.length > 50) this.logs.pop();
+                    this.saveLogs();
+                },
+
+                clearLogs() {
+                    if(confirm('Hapus semua riwayat aktivitas?')) {
+                        this.logs = [];
+                        this.saveLogs();
+                    }
+                },
+
+                resetData() {
+                    if(confirm('Hati-hati! Ini akan menghapus SEMUA progres hafalan dan riwayat Anda. Lanjutkan?')) {
+                        this.surahs = this.surahs.map(s => ({...s, completedAyats: 0}));
+                        this.logs = [];
+                        this.save();
+                        this.saveLogs();
+                    }
+                },
+
+                get filteredSurahs() {
+                    let items = this.surahs;
+                    if (this.searchQuery.trim() !== '') {
+                        const q = this.searchQuery.toLowerCase();
+                        items = items.filter(s => s.name.toLowerCase().includes(q) || s.id.toString() === q);
+                    }
+                    if (this.filter === 'ongoing') {
+                        items = items.filter(s => s.completedAyats > 0 && s.completedAyats < s.totalAyats);
+                    } else if (this.filter === 'completed') {
+                        items = items.filter(s => s.completedAyats === s.totalAyats);
+                    }
+                    return items.sort((a, b) => a.id - b.id);
+                },
+
+                get completedSurahs() { return this.surahs.filter(s => s.completedAyats === s.totalAyats).length; },
+                get totalAyatsDone() { return this.surahs.reduce((sum, s) => sum + s.completedAyats, 0); },
+                get overallProgress() {
+                    const totalPotential = this.surahs.reduce((sum, s) => sum + s.totalAyats, 0);
+                    return totalPotential === 0 ? 0 : (this.totalAyatsDone / totalPotential) * 100;
+                },
+
+                updateProgress(id, change) {
+                    const index = this.surahs.findIndex(s => s.id === id);
+                    if (index !== -1) {
+                        const surah = this.surahs[index];
+                        const newValue = surah.completedAyats + change;
+                        if (newValue >= 0 && newValue <= surah.totalAyats) {
+                            surah.completedAyats = newValue;
+                            this.save();
+                            
+                            if (newValue === surah.totalAyats && change > 0) {
+                                this.addLog('finish', surah.name, newValue, surah.totalAyats);
+                            } else {
+                                this.addLog(change > 0 ? 'add' : 'remove', surah.name, newValue, surah.totalAyats);
+                            }
+                        }
+                    }
+                },
+
+                finishSurah(id) {
+                    const index = this.surahs.findIndex(s => s.id === id);
+                    if (index !== -1) {
+                        const surah = this.surahs[index];
+                        surah.completedAyats = surah.totalAyats;
+                        this.save();
+                        this.addLog('finish', surah.name, surah.totalAyats, surah.totalAyats);
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</body>
+</html>
