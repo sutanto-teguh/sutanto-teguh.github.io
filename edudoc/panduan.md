@@ -49,5 +49,5 @@ Privasi Bapak/Ibu adalah prioritas kami:
 
 ---
 
-**Dibuat oleh:** [Nama Anda/Instansi]  
+**Dibuat oleh:** [Teguh Sutanto/LabFTI Universitas Dinamika]  
 *Mendukung administrasi dosen yang lebih efisien dan aman.*
