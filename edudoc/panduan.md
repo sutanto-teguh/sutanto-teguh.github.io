@@ -12,7 +12,7 @@ Bapak/Ibu dapat menggunakan aplikasi ini melalui dua jalur berikut:
 ### Jalur 1: Akses Cepat via Web (Rekomendasi)
 *Cocok untuk penggunaan langsung tanpa unduh file.*
 
-1. **Buka Tautan:** Akses di [LIVE ON SERVER] (https://sutanto-teguh.github.io/edudoc/)
+1. **Buka Tautan:** Akses di [LIVE ON SERVER](https://sutanto-teguh.github.io/edudoc/)
 2. **Instalasi (PWA):**
    - **Desktop (Chrome/Edge):** Klik ikon **Install** (gambar monitor) pada bar alamat atau klik tombol **"Install Sekarang"** di dalam aplikasi.
    - **HP (Android/iOS):** Pilih menu **"Tambahkan ke Layar Utama"** pada pengaturan browser.
