@@ -12,7 +12,7 @@ Bapak/Ibu dapat menggunakan aplikasi ini melalui dua jalur berikut:
 ### Jalur 1: Akses Cepat via Web (Rekomendasi)
 *Cocok untuk penggunaan langsung tanpa unduh file.*
 
-1. **Buka Tautan:** Akses di `[[MASUKKAN_URL_HOSTING_BAPAK_DI_SINI]](https://sutanto-teguh.github.io/edudoc/)`
+1. **Buka Tautan:** Akses di [LIVE ON SERVER] (https://sutanto-teguh.github.io/edudoc/)
 2. **Instalasi (PWA):**
    - **Desktop (Chrome/Edge):** Klik ikon **Install** (gambar monitor) pada bar alamat atau klik tombol **"Install Sekarang"** di dalam aplikasi.
    - **HP (Android/iOS):** Pilih menu **"Tambahkan ke Layar Utama"** pada pengaturan browser.
@@ -21,7 +21,7 @@ Bapak/Ibu dapat menggunakan aplikasi ini melalui dua jalur berikut:
 ### Jalur 2: Salinan Mandiri (via Google Drive)
 *Cocok jika Anda ingin menyimpan file master aplikasi di penyimpanan pribadi.*
 
-1. **Download:** Unduh file `EduDoc_Pro.html` dari folder Google Drive yang tersedia.
+1. **Download:** Unduh file `EduDoc_Pro.html` dari folder [Google Drive](https://drive.google.com/drive/folders/1RS6oz5Ml2ypj_VHGEeDC5TgxKXBZp_IB?usp=drive_link)  yang tersedia.
 2. **Jalankan:** Klik kanan pada file tersebut, lalu pilih **Open With > Google Chrome** atau **Microsoft Edge**.
 3. **Instalasi Manual:**
    - Klik **Menu Browser (titik tiga ⋮)** di pojok kanan atas.
