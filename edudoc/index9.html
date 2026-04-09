@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduDoc Pro - Alat Bantu Administrasi Guru & Dosen</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EduDoc Pro">
+    <meta name="description" content="Solusi PDF Offline untuk Guru dan Dosen. Gabungkan, pisahkan, dan kompres PDF dengan aman.">
+    
+    <!-- Manifest Link -->
+    <link rel="manifest" id="pwa-manifest">
+
+    <!-- PDF-Lib for Manipulation -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- PDF.js for Rendering/Preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .tab-active { @apply border-b-2 border-indigo-600 text-indigo-600 font-bold; }
+        .tab-inactive { @apply text-slate-500 hover:text-indigo-500 font-medium; }
+        
+        .drop-zone { @apply border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center bg-white hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer; }
+        
+        .btn-action-card {
+            @apply flex flex-col items-center justify-center p-10 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl shadow-slate-200/40 transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl active:scale-[0.98] w-full max-w-sm mx-auto cursor-pointer;
+        }
+
+        .icon-box {
+            @apply w-24 h-24 rounded-[2rem] flex items-center justify-center mb-6 transition-all duration-500 shadow-inner;
+        }
+
+        .btn-merge:hover { @apply border-indigo-200; }
+        .btn-merge .icon-box { @apply bg-indigo-50 text-indigo-600; }
+        .btn-merge:hover .icon-box { @apply bg-indigo-600 text-white rotate-[5deg]; }
+        
+        .btn-split:hover { @apply border-emerald-200; }
+        .btn-split .icon-box { @apply bg-emerald-50 text-emerald-600; }
+        .btn-split:hover .icon-box { @apply bg-emerald-600 text-white rotate-[-5deg]; }
+        
+        .btn-compress:hover { @apply border-orange-200; }
+        .btn-compress .icon-box { @apply bg-orange-50 text-orange-600; }
+        .btn-compress:hover .icon-box { @apply bg-orange-600 text-white scale-110; }
+
+        .preview-item { @apply border border-slate-100 rounded-xl p-3 bg-white shadow-sm flex flex-col items-center hover:shadow-md transition-shadow; }
+        
+        @keyframes slideInUp {
+            from { transform: translateY(100%) translateX(-50%); opacity: 0; }
+            to { transform: translateY(0) translateX(-50%); opacity: 1; }
+        }
+        .toast-animate { animation: slideInUp 0.3s ease-out forwards; }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .btn-support-hover {
+            @apply transition-all duration-300 hover:bg-amber-500 hover:shadow-lg hover:shadow-amber-200 active:scale-95;
+        }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] min-h-screen text-slate-900 pb-20">
+
+    <div id="toast-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] space-y-3 w-full max-w-xs px-4"></div>
+
+    <!-- Floating Support Button -->
+    <a href="https://lynk.id/alima/s/8345x5vzv1n3" target="_blank" class="fixed bottom-6 right-6 z-[100] flex items-center gap-3 bg-amber-400 text-amber-950 px-5 py-3 rounded-2xl font-black text-sm shadow-xl shadow-amber-200/50 btn-support-hover border border-white">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+        <span>Dukung Kami</span>
+    </a>
+
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-600 p-2.5 rounded-xl shadow-xl shadow-indigo-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-slate-900 leading-none">EduDoc Pro</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Secure PDF Hub</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="flex gap-1 bg-slate-100/80 p-1 rounded-xl">
+                <button onclick="switchTab('merge')" id="tab-merge" class="px-5 py-2.5 rounded-lg tab-active text-sm transition-all uppercase tracking-wider font-bold">Gabungkan</button>
+                <button onclick="switchTab('split')" id="tab-split" class="px-5 py-2.5 rounded-lg tab-inactive text-sm transition-all uppercase tracking-wider font-bold">Pisahkan</button>
+                <button onclick="switchTab('compress')" id="tab-compress" class="px-5 py-2.5 rounded-lg tab-inactive text-sm transition-all uppercase tracking-wider font-bold">Kompres</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-12">
+        <!-- Install PWA Banner -->
+        <div id="install-banner" class="hidden mb-12 bg-indigo-600 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-indigo-200">
+            <div class="text-center md:text-left">
+                <h3 class="font-black text-xl mb-1">Pasang EduDoc Pro</h3>
+                <p class="text-indigo-100 text-sm font-medium">Akses aplikasi lebih cepat langsung dari desktop atau layar utama HP Anda.</p>
+            </div>
+            <button id="btn-install" class="bg-white text-indigo-600 px-8 py-3 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-all active:scale-95 whitespace-nowrap">Pasang Sekarang</button>
+        </div>
+        
+        <!-- Tab 1: Merge PDF -->
+        <div id="content-merge" class="tab-content space-y-8">
+            <div class="text-center space-y-3 mb-10">
+                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Satukan PDF Anda</h2>
+                <p class="text-slate-500 max-w-lg mx-auto leading-relaxed">Gabungkan materi pengajaran, tugas, atau jurnal menjadi satu berkas rapi.</p>
+            </div>
+            <div class="bg-white p-3 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+                <div class="drop-zone" onclick="document.getElementById('input-merge').click()">
+                    <input type="file" id="input-merge" multiple accept=".pdf" class="hidden" onchange="handleMergeFileSelect(this)">
+                    <div class="flex flex-col items-center">
+                        <div class="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-5 text-indigo-600">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        </div>
+                        <p class="text-slate-800 font-extrabold text-xl">Impor PDF</p>
+                        <p class="text-slate-400 text-sm mt-2 font-medium">Klik untuk memilih beberapa berkas</p>
+                    </div>
+                </div>
+            </div>
+            <div id="merge-info-area" class="hidden space-y-8">
+                <div id="list-merge" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                <div class="bg-white p-8 rounded-3xl border border-slate-100">
+                    <h3 class="text-xs font-black text-slate-400 mb-6 uppercase tracking-widest">Urutan Halaman</h3>
+                    <div id="merge-preview-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 max-h-[500px] overflow-y-auto p-2 scrollbar-hide"></div>
+                </div>
+                <div class="pt-6 flex justify-center">
+                    <button onclick="processMerge()" class="btn-action-card btn-merge">
+                        <div class="icon-box">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <span class="text-slate-900 font-extrabold text-2xl tracking-tight">Gabungkan Sekarang</span>
+                        <p class="text-slate-400 text-sm mt-2 font-semibold">Satukan semua berkas di atas</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Split PDF -->
+        <div id="content-split" class="tab-content hidden space-y-8">
+            <div class="text-center space-y-3 mb-10">
+                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Ekstrak Halaman</h2>
+                <p class="text-slate-500 max-w-lg mx-auto leading-relaxed">Ambil bagian penting saja dari modul atau buku referensi yang tebal.</p>
+            </div>
+            <div class="bg-white p-8 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+                <input type="file" id="input-split" accept=".pdf" class="block w-full text-sm text-slate-500 file:mr-6 file:py-4 file:px-8 file:rounded-2xl file:border-0 file:bg-emerald-50 file:text-emerald-700 file:font-black hover:file:bg-emerald-100 cursor-pointer" onchange="handleSplitFileSelect(this)">
+                <div id="split-info" class="hidden mt-10 space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="p-8 bg-emerald-50/40 rounded-3xl border border-emerald-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-1">Total</p>
+                                <p id="total-pages-text" class="text-4xl font-black text-emerald-900">0</p>
+                            </div>
+                            <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <div class="p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-right">Rentang Halaman</label>
+                            <input type="text" id="split-range" placeholder="1-3, 5" class="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-100 text-right font-black text-slate-800 text-xl">
+                        </div>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl border border-slate-100">
+                        <div id="split-preview-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 max-h-[450px] overflow-y-auto p-2 scrollbar-hide"></div>
+                    </div>
+                    <div class="pt-6 flex justify-center">
+                        <button onclick="processSplit()" class="btn-action-card btn-split">
+                            <div class="icon-box">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                            </div>
+                            <span class="text-slate-900 font-extrabold text-2xl tracking-tight">Ekstrak Sekarang</span>
+                            <p class="text-slate-400 text-sm mt-2 font-semibold">Unduh halaman terpilih</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Compress PDF -->
+        <div id="content-compress" class="tab-content hidden space-y-8">
+            <div class="text-center space-y-3 mb-10">
+                <h2 class="text-4xl font-black text-slate-900 tracking-tight">Kecilkan File</h2>
+                <p class="text-slate-500 max-w-lg mx-auto leading-relaxed">Kurangi ukuran file PDF agar mudah dikirim melalui WhatsApp atau Email.</p>
+            </div>
+            <div class="bg-white p-10 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 space-y-10">
+                <input type="file" id="input-compress" accept=".pdf" class="block w-full text-sm text-slate-500 file:mr-6 file:py-4 file:px-8 file:rounded-2xl file:border-0 file:bg-orange-50 file:text-orange-700 file:font-black hover:file:bg-orange-100 cursor-pointer" onchange="handleCompressFileSelect(this)">
+                <div id="compress-stats" class="hidden grid grid-cols-2 gap-4">
+                    <div class="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ukuran Awal</p>
+                        <p id="size-original" class="text-2xl font-black text-slate-800">-</p>
+                    </div>
+                    <div id="compress-result-box" class="p-6 bg-orange-50/50 rounded-3xl border border-orange-100 text-center opacity-50">
+                        <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1">Ukuran Baru</p>
+                        <p id="size-compressed" class="text-2xl font-black text-orange-600">-</p>
+                    </div>
+                </div>
+                <div class="p-8 rounded-3xl bg-orange-50/20 border border-orange-100/50">
+                    <p class="font-black text-orange-900/40 text-xs uppercase tracking-widest mb-6">Analisis Optimasi</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3 text-xs font-bold text-orange-800/60"><div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px]">✓</div> Metadata Strip</div>
+                        <div class="flex items-center gap-3 text-xs font-bold text-orange-800/60"><div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px]">✓</div> Font Subset</div>
+                        <div class="flex items-center gap-3 text-xs font-bold text-orange-800/60"><div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px]">✓</div> Flate Compression</div>
+                        <div class="flex items-center gap-3 text-xs font-bold text-orange-800/60"><div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px]">✓</div> Object Stream</div>
+                    </div>
+                </div>
+                <div class="pt-6 flex justify-center">
+                    <button onclick="processCompress()" class="btn-action-card btn-compress">
+                        <div class="icon-box">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                        </div>
+                        <span class="text-slate-900 font-extrabold text-2xl tracking-tight">Kompres & Unduh</span>
+                        <p class="text-slate-400 text-sm mt-2 font-semibold">Optimalkan ukuran berkas</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="max-w-4xl mx-auto px-6 py-16 text-center border-t border-slate-100 mt-12 flex flex-col items-center">
+        <div class="bg-slate-900 text-white inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">Lokal & Aman</div>
+        <p class="text-slate-400 text-sm font-medium leading-relaxed mb-8">© 2024 EduDoc Pro. Semua berkas diproses di dalam browser Anda.</p>
+        <div class="p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 max-w-sm w-full">
+            <p class="text-amber-900 font-black text-sm mb-4 uppercase tracking-widest">Suka dengan aplikasi ini?</p>
+            <a href="https://lynk.id/alima/s/8345x5vzv1n3" target="_blank" class="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-amber-950 px-8 py-3 rounded-2xl font-black text-sm transition-all active:scale-95 w-full">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                Traktir Pengembang
+            </a>
+        </div>
+    </footer>
+
+    <!-- Loading Modal -->
+    <div id="loading" class="fixed inset-0 bg-slate-900/60 hidden backdrop-blur-md z-[100] flex items-center justify-center p-6">
+        <div class="bg-white p-12 rounded-[3rem] flex flex-col items-center shadow-2xl max-w-sm w-full text-center">
+            <div class="relative w-24 h-24 mb-10">
+                <div class="absolute inset-0 rounded-full border-[8px] border-slate-100"></div>
+                <div class="absolute inset-0 rounded-full border-[8px] border-indigo-600 border-t-transparent animate-spin"></div>
+            </div>
+            <p id="loading-text" class="font-black text-slate-900 text-2xl mb-3 tracking-tight">Memproses...</p>
+            <p class="text-slate-400 text-sm leading-relaxed font-semibold">Tunggu sebentar, kami sedang menyiapkan berkas terbaik untuk Anda.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- PWA LOGIC ---
+        // Kita hanya menggunakan Manifest agar browser mengenali ini sebagai aplikasi yang dapat diinstal.
+        // Pendaftaran Service Worker via Blob dihapus karena pembatasan protokol URL Blob di beberapa browser.
+        const manifest = {
+            "name": "EduDoc Pro",
+            "short_name": "EduDoc",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#F8FAFC",
+            "theme_color": "#4f46e5",
+            "description": "Alat Bantu Administrasi PDF Guru & Dosen",
+            "icons": [
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/337/337946.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                }
+            ]
+        };
+        const manifestStr = JSON.stringify(manifest);
+        const manifestBlob = new Blob([manifestStr], {type: 'application/json'});
+        document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(manifestBlob));
+
+        // Install Prompt Logic
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-banner').classList.remove('hidden');
+        });
+
+        document.getElementById('btn-install').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('install-banner').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            } else {
+                showToast("SILAKAN GUNAKAN MENU BROWSER UNTUK MEMASANG", "success");
+            }
+        });
+
+        // --- APP LOGIC ---
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function switchTab(tabId) {
+            resetAllInputs();
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.remove('tab-inactive');
+            document.getElementById('tab-' + tabId).classList.add('tab-active');
+        }
+
+        function resetAllInputs() {
+            document.getElementById('input-merge').value = '';
+            document.getElementById('input-split').value = '';
+            document.getElementById('input-compress').value = '';
+            document.getElementById('list-merge').innerHTML = '';
+            document.getElementById('merge-preview-grid').innerHTML = '';
+            document.getElementById('split-preview-grid').innerHTML = '';
+            document.getElementById('merge-info-area').classList.add('hidden');
+            document.getElementById('split-info').classList.add('hidden');
+            document.getElementById('split-range').value = '';
+            document.getElementById('compress-stats').classList.add('hidden');
+            document.getElementById('size-original').innerText = '-';
+            document.getElementById('size-compressed').innerText = '-';
+            document.getElementById('compress-result-box').classList.add('opacity-50');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-slate-900' : 'bg-red-600';
+            toast.className = `${bgColor} text-white px-8 py-5 rounded-[2rem] shadow-2xl flex items-center gap-4 toast-animate font-black text-xs uppercase tracking-widest`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
+
+        function showLoading(show, text = "Memproses Berkas") {
+            const lt = document.getElementById('loading-text');
+            if (lt) lt.innerText = text;
+            const l = document.getElementById('loading');
+            if (l) l.classList.toggle('hidden', !show);
+        }
+
+        function downloadFile(blob, name) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("BERKAS BERHASIL DIUNDUH");
+        }
+
+        async function handleMergeFileSelect(input) {
+            const files = input.files;
+            if (files.length === 0) return;
+            const mergeInfoArea = document.getElementById('merge-info-area');
+            const listMerge = document.getElementById('list-merge');
+            const previewGrid = document.getElementById('merge-preview-grid');
+            mergeInfoArea.classList.remove('hidden');
+            listMerge.innerHTML = '';
+            previewGrid.innerHTML = '<p class="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest">Membangun Pratinjau...</p>';
+            let allThumbnails = [];
+            try {
+                for (let f = 0; f < files.length; f++) {
+                    const file = files[f];
+                    const item = document.createElement('div');
+                    item.className = "flex items-center justify-between bg-white px-6 py-5 rounded-3xl border border-slate-100 shadow-sm";
+                    item.innerHTML = `<span class="truncate font-bold text-slate-700 text-sm">${file.name}</span>`;
+                    listMerge.appendChild(item);
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const viewport = page.getViewport({ scale: 0.25 });
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        await page.render({ canvasContext: context, viewport: viewport }).promise;
+                        allThumbnails.push({ fileName: file.name, pageIdx: i, dataUrl: canvas.toDataURL() });
+                    }
+                }
+                previewGrid.innerHTML = '';
+                allThumbnails.forEach(thumb => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = "preview-item";
+                    previewItem.innerHTML = `
+                        <div class="relative w-full aspect-[1/1.4] overflow-hidden bg-slate-50 rounded-xl mb-3">
+                             <img src="${thumb.dataUrl}" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hal. ${thumb.pageIdx}</p>
+                    `;
+                    previewGrid.appendChild(previewItem);
+                });
+            } catch (err) { showToast("Gagal memuat pratinjau.", "error"); }
+        }
+
+        async function handleSplitFileSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const splitInfo = document.getElementById('split-info');
+            const previewGrid = document.getElementById('split-preview-grid');
+            const totalText = document.getElementById('total-pages-text');
+            splitInfo.classList.remove('hidden');
+            previewGrid.innerHTML = '';
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                totalText.innerText = pdf.numPages;
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 0.3 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    const previewItem = document.createElement('div');
+                    previewItem.className = "preview-item group cursor-pointer hover:bg-emerald-50 transition-all";
+                    previewItem.onclick = () => {
+                        const r = document.getElementById('split-range');
+                        r.value = r.value ? r.value + ',' + i : i;
+                    };
+                    previewItem.innerHTML = `
+                        <div class="relative w-full aspect-[1/1.4] overflow-hidden bg-slate-50 rounded-xl mb-3">
+                             <img src="${canvas.toDataURL()}" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-[9px] font-black text-slate-400 tracking-widest uppercase">Hal. ${i}</p>
+                    `;
+                    previewGrid.appendChild(previewItem);
+                }
+            } catch (err) { showToast("Gagal memuat PDF.", "error"); }
+        }
+
+        function handleCompressFileSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            document.getElementById('compress-stats').classList.remove('hidden');
+            document.getElementById('size-original').innerText = formatBytes(file.size);
+            document.getElementById('size-compressed').innerText = '-';
+            document.getElementById('compress-result-box').classList.add('opacity-50');
+        }
+
+        async function processMerge() {
+            const files = document.getElementById('input-merge').files;
+            if (files.length < 2) return showToast("PILIH MINIMAL 2 BERKAS", "error");
+            showLoading(true, "Menggabungkan PDF...");
+            try {
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                for (const file of files) {
+                    const bytes = await file.arrayBuffer();
+                    const pdf = await PDFLib.PDFDocument.load(bytes);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                }
+                const pdfBytes = await mergedPdf.save();
+                downloadFile(new Blob([pdfBytes]), "EduDoc_Gabungan.pdf");
+            } catch (e) { showToast("Gagal memproses berkas.", "error"); }
+            showLoading(false);
+        }
+
+        async function processSplit() {
+            const file = document.getElementById('input-split').files[0];
+            const rangeInput = document.getElementById('split-range').value;
+            if (!file || !rangeInput) return showToast("TENTUKAN HALAMAN", "error");
+            showLoading(true, "Mengekstrak PDF...");
+            try {
+                const pdfBytes = await file.arrayBuffer();
+                const sourcePdf = await PDFLib.PDFDocument.load(pdfBytes);
+                const newPdf = await PDFLib.PDFDocument.create();
+                let pageIndices = [];
+                const segments = rangeInput.split(',');
+                segments.forEach(seg => {
+                    if (seg.includes('-')) {
+                        const [start, end] = seg.split('-').map(x => parseInt(x.trim()) - 1);
+                        for (let i = start; i <= end; i++) {
+                            if (i >= 0 && i < sourcePdf.getPageCount()) pageIndices.push(i);
+                        }
+                    } else {
+                        const idx = parseInt(seg.trim()) - 1;
+                        if (!isNaN(idx) && idx >= 0 && idx < sourcePdf.getPageCount()) pageIndices.push(idx);
+                    }
+                });
+                pageIndices = [...new Set(pageIndices)].sort((a, b) => a - b);
+                const copiedPages = await newPdf.copyPages(sourcePdf, pageIndices);
+                copiedPages.forEach(p => newPdf.addPage(p));
+                const finalBytes = await newPdf.save();
+                downloadFile(new Blob([finalBytes]), "EduDoc_Ekstrak.pdf");
+            } catch (e) { showToast("Periksa kembali rentang.", "error"); }
+            showLoading(false);
+        }
+
+        async function processCompress() {
+            const file = document.getElementById('input-compress').files[0];
+            if (!file) return showToast("UNGGAH BERKAS DULU", "error");
+            showLoading(true, "Mengompres Berkas...");
+            try {
+                const bytes = await file.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(bytes);
+                const compressedBytes = await pdfDoc.save({ 
+                    useObjectStreams: true,
+                    addDefaultPage: false,
+                    preserveEncryption: false
+                });
+                const blob = new Blob([compressedBytes]);
+                document.getElementById('size-compressed').innerText = formatBytes(blob.size);
+                document.getElementById('compress-result-box').classList.remove('opacity-50');
+                downloadFile(blob, "EduDoc_Kompres.pdf");
+            } catch (e) { showToast("Gagal mengompres.", "error"); }
+            showLoading(false);
+        }
+    </script>
+</body>
+</html>
